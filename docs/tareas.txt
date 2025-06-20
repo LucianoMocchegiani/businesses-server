@@ -1,0 +1,2 @@
+complete sales logica de inventario y stock,
+complete purchases logica de inventario y stock,

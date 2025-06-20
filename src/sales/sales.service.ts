@@ -1,0 +1,223 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateSaleDto } from './dto/create-sale.dto';
+import { GetSalesDto } from './dto/get-sales.dto';
+import { SaleStatus } from '@prisma/client';
+
+@Injectable()
+export class SalesService {
+  constructor(private prisma: PrismaService) { }
+
+  async getSalesByBusiness(query: GetSalesDto) {
+    const {
+      business_id,
+      page = 1,
+      limit = 10,
+      orderBy = 'created_at',
+      orderDirection = 'desc',
+      customer_name,
+      total_amount,
+      status,
+      created_at,
+      updated_at,
+    } = query;
+
+    if (!business_id) {
+      throw new Error('business_id es obligatorio');
+    }
+
+    // Prisma orderBy config
+    let order: any = {};
+    if (orderBy === 'customer_name') {
+      order = { customer: { customer_name: orderDirection } };
+    } else {
+      order[orderBy] = orderDirection;
+    }
+
+    // Prisma where config
+    const where: any = { business_id };
+    if (customer_name) {
+      where.customer = { customer_name: { contains: customer_name, mode: 'insensitive' } };
+    }
+    if (total_amount !== undefined) {
+      where.total_amount = total_amount;
+    }
+    if (status) {
+      where.status = status;
+    }
+    if (created_at) {
+      where.created_at = { gte: new Date(created_at) };
+    }
+    if (updated_at) {
+      where.updated_at = { gte: new Date(updated_at) };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.sale.findMany({
+        where,
+        orderBy: order,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { customer: true, saleDetails: true },
+      }),
+      this.prisma.sale.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    };
+  }
+
+  async getSaleById(saleId: number) {
+    return this.prisma.sale.findUnique({
+      where: { sale_id: saleId },
+      include: { saleDetails: true },
+    });
+  }
+
+  async createSale(data: CreateSaleDto ) {
+    // data.saleDetails: [{business_product_id, global_product_id, quantity, ...}]
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Crear la venta y sus detalles
+      const sale = await tx.sale.create({
+        data: {
+          ...data,
+          status: data.status as SaleStatus,
+          saleDetails: {
+            create: data.saleDetails,
+          },
+        },
+        include: { saleDetails: true },
+      });
+
+      // 2. Por cada detalle, actualizar inventario y lotes
+      for (const detail of sale.saleDetails) {
+        // Buscar inventario correspondiente
+        const inventory = await tx.inventory.findFirst({
+          where: {
+            business_id: sale.business_id,
+            OR: [
+              { business_product_id: detail.business_product_id ?? undefined },
+              { global_product_id: detail.global_product_id ?? undefined },
+            ],
+          },
+        });
+
+        if (!inventory) {
+          throw new Error('No hay inventario para el producto vendido');
+        }
+
+        // Verificar stock suficiente
+        if (inventory.stock_quantity_total < detail.quantity) {
+          throw new Error('Stock insuficiente para la venta');
+        }
+
+        // Restar del inventario total
+        await tx.inventory.update({
+          where: { inventory_id: inventory.inventory_id },
+          data: {
+            stock_quantity_total: {
+              decrement: detail.quantity,
+            },
+            updated_at: new Date(),
+          },
+        });
+
+        // Restar de los lotes (FIFO)
+        let quantityToSubtract = detail.quantity;
+        const lots = await tx.lot.findMany({
+          where: { inventory_id: inventory.inventory_id, stock_quantity: { gt: 0 } },
+          orderBy: { entry_date: 'asc' },
+        });
+
+        for (const lot of lots) {
+          if (quantityToSubtract <= 0) break;
+          const subtract = Math.min(lot.stock_quantity, quantityToSubtract);
+          await tx.lot.update({
+            where: { lot_id: lot.lot_id },
+            data: {
+              stock_quantity: { decrement: subtract },
+            },
+          });
+          quantityToSubtract -= subtract;
+        }
+
+        if (quantityToSubtract > 0) {
+          throw new Error('No hay suficiente stock en los lotes para la venta');
+        }
+      }
+
+      return sale;
+    });
+  }
+
+  async cancelSale(saleId: number) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Obtener la venta y sus detalles
+      const sale = await tx.sale.findUnique({
+        where: { sale_id: saleId },
+        include: { saleDetails: true },
+      });
+
+      if (!sale) {
+        throw new Error('Venta no encontrada');
+      }
+
+      // 2. Por cada detalle, restaurar inventario y lotes
+      for (const detail of sale.saleDetails) {
+        // Buscar inventario correspondiente
+        const inventory = await tx.inventory.findFirst({
+          where: {
+            business_id: sale.business_id,
+            OR: [
+              { business_product_id: detail.business_product_id ?? undefined },
+              { global_product_id: detail.global_product_id ?? undefined },
+            ],
+          },
+        });
+
+        if (!inventory) continue;
+
+        // Sumar al inventario total
+        await tx.inventory.update({
+          where: { inventory_id: inventory.inventory_id },
+          data: {
+            stock_quantity_total: {
+              increment: detail.quantity,
+            },
+            updated_at: new Date(),
+          },
+        });
+
+        // Sumar a los lotes (LIFO: los más nuevos primero)
+        let quantityToRestore = detail.quantity;
+        const lots = await tx.lot.findMany({
+          where: { inventory_id: inventory.inventory_id },
+          orderBy: { entry_date: 'desc' },
+        });
+
+        for (const lot of lots) {
+          if (quantityToRestore <= 0) break;
+          // Restaurar la cantidad al lote
+          await tx.lot.update({
+            where: { lot_id: lot.lot_id },
+            data: {
+              stock_quantity: { increment: quantityToRestore },
+            },
+          });
+          // Suponemos que no hay límite superior, si quieres limitar, ajusta aquí
+          quantityToRestore = 0;
+        }
+      }
+
+      // 3. Eliminar la venta y sus detalles
+      await tx.saleDetail.deleteMany({ where: { sale_id: saleId } });
+      await tx.sale.delete({ where: { sale_id: saleId } });
+
+      return { message: 'Venta cancelada y stock restaurado' };
+    });
+  }
+}
