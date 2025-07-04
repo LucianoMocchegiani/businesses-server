@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Expone el puerto (opcional, pero recomendado)
-EXPOSE 3000
+EXPOSE 8080
 
 # Comando de inicio
 CMD ["node", "dist/main.js"]

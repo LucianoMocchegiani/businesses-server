@@ -43,9 +43,61 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async use(req: Request, res: Response, next: NextFunction) {
+    // Rutas que NO requieren autenticación
+    const publicRoutes = [
+      { method: 'GET', path: '/api/users/firebase' }, // Buscar por Firebase UID (prefix match)
+      { method: 'GET', path: '/api/docs' }, // Swagger docs (prefix match)
+      { method: 'GET', path: '/api/firebase-status' }, // Firebase status
+      { method: 'GET', path: '/api' }, // Health check (exact match)
+      { method: 'GET', path: '/' }, // Root path
+    ];
+
+    // Rutas que requieren token pero NO buscan usuario en DB (para crear usuarios)
+    const userCreationRoutes = [
+      { method: 'POST', path: '/api/users' } // Crear usuario
+    ];
+
+    // Verificar si la ruta actual está en las rutas públicas
+    const isPublicRoute = publicRoutes.some(route => {
+      const methodMatches = req.method === route.method;
+
+      // Lógica de matching más específica
+      let pathMatches = false;
+      if (route.path === '/api') {
+        // Para /api debe ser exacto
+        pathMatches = req.url === '/api' || req.url === '/api/';
+      } else if (route.path === '/') {
+        // Para root debe ser exacto
+        pathMatches = req.url === '/';
+      } else {
+        // Para otras rutas, usar startsWith pero asegurar que no sea un substring accidental
+        pathMatches = req.url.startsWith(route.path) &&
+          (req.url === route.path || req.url.startsWith(route.path + '/') || req.url.startsWith(route.path + '?'));
+      }
+
+      const matches = methodMatches && pathMatches;
+      return matches;
+    });
+
+    if (isPublicRoute) {
+      return next();
+    }
+
+    // Verificar si es ruta de creación de usuarios
+    const isUserCreationRoute = userCreationRoutes.some(route => {
+      const methodMatches = req.method === route.method;
+
+      // Lógica de matching específica para rutas de creación
+      const pathMatches = req.url.startsWith(route.path) &&
+        (req.url === route.path || req.url.startsWith(route.path + '/') || req.url.startsWith(route.path + '?'));
+
+      const matches = methodMatches && pathMatches;
+      return matches;
+    });
+
     const authHeader = req.headers['authorization'];
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
@@ -58,16 +110,28 @@ export class AuthMiddleware implements NestMiddleware {
       const decodedToken = await admin.auth().verifyIdToken(token);
       const firebaseUid = decodedToken.uid;
 
-      // Busca el usuario en tu base de datos usando el firebase_uid
-      const user = await this.prisma.user.findUnique({ where: { firebase_uid: firebaseUid } });
-
-      if (!user) {
-        throw new UnauthorizedException('Usuario no encontrado');
+      // Si es ruta de creación de usuarios, solo verificar token, no buscar en DB
+      if (isUserCreationRoute) {
+        req.firebaseUser = decodedToken; // Datos de Firebase para crear usuario
+        return next();
       }
 
-      req.user = user;
-      next();
+      // Para todas las demás rutas, buscar el usuario en la base de datos
+      try {
+        const user = await this.prisma.user.findUnique({ where: { firebase_uid: firebaseUid } });
+
+        if (!user) {
+          throw new UnauthorizedException('Usuario no encontrado');
+        }
+
+        req.user = user;
+        next();
+      } catch (dbError) {
+        console.error('❌ Database connection error:', dbError.message);
+        next();
+      }
     } catch (err) {
+      console.error('❌ Token verification failed:', err);
       throw new UnauthorizedException('Token inválido o expirado');
     }
   }

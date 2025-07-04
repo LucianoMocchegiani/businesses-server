@@ -28,7 +28,7 @@ docker run --name postgres-db `
 
 ### 3. Iniciar la aplicación con variables de entorno
 ```powershell
-docker run -p 3000:3000 --env-file .env businesses-server
+docker run -p 8080:8080 --env-file .env businesses-server
 ```
 
 ### Otros comandos útiles

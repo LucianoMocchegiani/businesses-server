@@ -1,14 +1,29 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Req, UnauthorizedException } from '@nestjs/common';
+import { Request } from 'express';
 import { BusinessesService } from './businesses.service';
 import { Business } from '@prisma/client';
 
+interface CreateBusinessWithOwnerDto {
+  name: string;
+  address?: string;
+  phone?: string;
+  owner_profile_name: string;
+  owner_user_id: number;
+}
+
 @Controller('businesses')
 export class BusinessesController {
-  constructor(private readonly businessesService: BusinessesService) {}
+  constructor(private readonly businessesService: BusinessesService) { }
 
   @Get()
   findAll(@Param('user_id') user_id: number): Promise<Business[]> {
     return this.businessesService.findAll(user_id);
+  }
+
+  @Get('user')
+  findUserBusinesses(@Req() req: Request) {
+    const userId = req.user?.user_id;
+    return this.businessesService.findUserBusinesses(userId!);
   }
 
   @Get(':id')
@@ -19,6 +34,11 @@ export class BusinessesController {
   @Post()
   create(@Body() data: Omit<Business, 'business_id' | 'created_at' | 'updated_at'>): Promise<Business> {
     return this.businessesService.create(data);
+  }
+
+  @Post('with-owner')
+  createWithOwner(@Body() data: CreateBusinessWithOwnerDto) {
+    return this.businessesService.createBusinessWithOwner(data);
   }
 
   @Put(':id')

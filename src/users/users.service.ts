@@ -14,6 +14,10 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { user_id } });
   }
 
+  async findByFirebaseUid(firebase_uid: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { firebase_uid } });
+  }
+
   async create(data: Omit<User, 'user_id' | 'created_at' | 'updated_at'>): Promise<User> {
     return this.prisma.user.create({ data });
   }

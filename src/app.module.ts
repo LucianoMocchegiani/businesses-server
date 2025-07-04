@@ -24,15 +24,21 @@ import { BusinessProductsController } from './business-products/business-product
 import { CategoriesService } from './categories/categories.service';
 import { CategoriesModule } from './categories/categories.module';
 import { CategoriesController } from './categories/categories.controller';
+import { ProfilesService } from './profiles/profiles.service';
+import { ProfilesModule } from './profiles/profiles.module';
+import { ProfilesController } from './profiles/profiles.controller';
+import { ServicesService } from './services/services.service';
+import { ServicesModule } from './services/services.module';
+import { ServicesController } from './services/services.controller';
 
 // Middlewares
 import { AuthMiddleware } from './common/middlewares/auth.middleware';
 import { PermissionMiddleware } from './common/middlewares/permission.middleware';
 
 @Module({
-  imports: [PrismaModule, UsersModule, BusinessesModule, SalesModule, PurchasesModule, GlobalProductsModule, BusinessProductsModule, CategoriesModule],
-  controllers: [AppController, ServicesnpxController, UsersController, BusinessesController, SalesController, PurchasesController, GlobalProductsController, BusinessProductsController, CategoriesController],
-  providers: [AppService, UsersService, BusinessesService, SalesService, PurchasesService, GlobalProductsService, BusinessProductsService, CategoriesService],
+  imports: [PrismaModule, UsersModule, BusinessesModule, SalesModule, PurchasesModule, GlobalProductsModule, BusinessProductsModule, CategoriesModule, ProfilesModule, ServicesModule],
+  controllers: [AppController, ServicesnpxController, UsersController, BusinessesController, SalesController, PurchasesController, GlobalProductsController, BusinessProductsController, CategoriesController, ProfilesController, ServicesController],
+  providers: [AppService, UsersService, BusinessesService, SalesService, PurchasesService, GlobalProductsService, BusinessProductsService, CategoriesService, ProfilesService, ServicesService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

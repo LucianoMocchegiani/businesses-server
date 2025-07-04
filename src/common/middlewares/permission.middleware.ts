@@ -2,13 +2,6 @@ import { Injectable, NestMiddleware, ForbiddenException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
 
-// Extend Express Request interface to include 'user'
-declare module 'express-serve-static-core' {
-    interface Request {
-        user?: { user_id: number;[key: string]: any };
-    }
-}
-
 /**
  * PermissionMiddleware
  * 
@@ -60,10 +53,40 @@ export class PermissionMiddleware implements NestMiddleware {
 
     async use(req: Request, _res: Response, next: NextFunction) {
         const userId = req.user?.user_id;
-        const serviceName = req.baseUrl.split('/')[1];
+        
+        // Extraer serviceName correctamente - el índice 2: ['', 'api', 'serviceName']
+        const urlParts = req.baseUrl.split('/');
+        const serviceName = urlParts[2] || req.url.split('/')[2];
 
-        if (!userId || !serviceName) {
-            throw new ForbiddenException('Usuario o servicio no especificado');
+        // Rutas que requieren token pero NO requieren verificación de permisos
+        const skipPermissionRoutes = [
+            { method: 'POST', path: '/api/users' }, // Crear usuario
+            { method: 'GET', path: '/api/profiles/user' }, // Obtener perfiles del usuario
+            { method: 'POST', path: '/api/profiles' }, // Crear perfil
+            { method: 'GET', path: '/api/profiles' }, // Listar perfiles
+            { method: 'GET', path: '/api/services' }, // Listar servicios disponibles
+            { method: 'GET', path: '/api/businesses/user' }, // Obtener negocios del usuario
+            { method: 'POST', path: '/api/businesses/with-owner' }, // Crear negocio con owner
+            { method: 'GET', path: '/api/businesses' } // Listar negocios
+        ];
+
+        // Verificar si es ruta que debe saltar verificación de permisos
+        const shouldSkipPermissions = skipPermissionRoutes.some(route => {
+            const methodMatches = req.method === route.method;
+            const pathMatches = req.url.startsWith(route.path);
+            return methodMatches && pathMatches;
+        });
+
+        if (shouldSkipPermissions) {
+            return next();
+        }
+
+        if (!userId) {
+            throw new ForbiddenException('Usuario no especificado');
+        }
+
+        if (!serviceName) {
+            throw new ForbiddenException('Servicio no especificado');
         }
 
         // Busca el perfil del usuario
