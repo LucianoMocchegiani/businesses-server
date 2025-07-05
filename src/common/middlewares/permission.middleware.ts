@@ -64,7 +64,12 @@ export class PermissionMiddleware implements NestMiddleware {
         
         // Extraer serviceName correctamente - el índice 2: ['', 'api', 'serviceName']
         const urlParts = req.baseUrl.split('/');
-        const serviceName = urlParts[2] || req.url.split('/')[2];
+        let serviceName = urlParts[2] || req.url.split('/')[2];
+        
+        // Limpiar query parameters del serviceName
+        if (serviceName && serviceName.includes('?')) {
+            serviceName = serviceName.split('?')[0];
+        }
 
         // Rutas que requieren token pero NO requieren verificación de permisos
         const skipPermissionRoutes = [
@@ -155,7 +160,7 @@ export class PermissionMiddleware implements NestMiddleware {
         }
 
         if (!hasPermission) {
-            throw new ForbiddenException('No tienes permisos para acceder a este servicio');
+            throw new ForbiddenException(`No tienes permisos con el método ${req.method} para acceder al servicio: ${serviceName}`);
         }
 
         next();

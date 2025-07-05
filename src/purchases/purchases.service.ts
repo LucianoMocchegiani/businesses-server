@@ -3,14 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
 import { PurchaseStatus } from '@prisma/client';
+import { BusinessHeaders } from '../common/types';
 
 @Injectable()
 export class PurchasesService {
   constructor(private prisma: PrismaService) { }
 
-  async getPurchasesByBusiness(query: GetPurchasesDto) {
+  async getPurchasesByBusiness(query: GetPurchasesDto, headers: BusinessHeaders) {
     const {
-      business_id,
       page = 1,
       limit = 10,
       orderBy = 'created_at',
@@ -21,6 +21,8 @@ export class PurchasesService {
       created_at,
       updated_at,
     } = query;
+
+    const { business_id } = headers;
 
     if (!business_id) {
       throw new Error('business_id es obligatorio');
@@ -79,14 +81,18 @@ export class PurchasesService {
   }
 
   // Nuevo método para crear una compra y actualizar inventario
-  async createPurchase(data: CreatePurchaseDto) {
+  async createPurchase(data: CreatePurchaseDto, headers: BusinessHeaders) {
     // data debe incluir purchaseDetails: [{business_product_id, global_product_id, quantity, lot_number, entry_date, expiration_date, ...}]
+    const { business_id } = headers;
+    
     return this.prisma.$transaction(async (tx) => {
       // 1. Crear la compra y sus detalles
       const purchase = await tx.purchase.create({
         data: {
-          ...data,
-          status: data.status as PurchaseStatus, 
+          business_id,
+          supplier_id: data.supplier_id,
+          total_amount: data.total_amount,
+          status: data.status as PurchaseStatus,
           purchaseDetails: {
             create: data.purchaseDetails,
           },

@@ -17,9 +17,8 @@ export class PurchasesController {
     if (!req.businessId) {
       throw new Error('Business ID is required');
     }
-    // Agregar business_id al query
-    const queryWithBusiness = { ...query, business_id: req.businessId };
-    return this.purchasesService.getPurchasesByBusiness(queryWithBusiness);
+    // Pasar headers al servicio
+    return this.purchasesService.getPurchasesByBusiness(query, { business_id: req.businessId });
   }
 
   @Get(':id')
@@ -34,8 +33,12 @@ export class PurchasesController {
   @ApiOperation({ summary: 'Crear una compra / Añade o actualiza inventarios' })
   @ApiBody({ type: CreatePurchaseDto })
   @ApiResponse({ status: 201, description: 'Compra creada' })
-  async createPurchase(@Body() data: CreatePurchaseDto) {
-    return this.purchasesService.createPurchase(data);
+  async createPurchase(@Body() data: CreatePurchaseDto, @Req() req: Request) {
+    if (!req.businessId) {
+      throw new Error('Business ID is required');
+    }
+    // Pasar headers al servicio
+    return this.purchasesService.createPurchase(data, { business_id: req.businessId });
   }
 
   @Delete(':id')

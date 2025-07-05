@@ -5,6 +5,7 @@ import { validateEnvironment } from './config/environment';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Validar variables de entorno antes de inicializar la aplicación
@@ -32,6 +33,16 @@ async function bootstrap() {
 
   // Global API prefix
   app.setGlobalPrefix('api');
+
+  // Global validation pipe with transformations enabled
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
 
   // Swagger config
   const config = new DocumentBuilder()

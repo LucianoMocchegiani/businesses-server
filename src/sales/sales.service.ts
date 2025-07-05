@@ -3,14 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { GetSalesDto } from './dto/get-sales.dto';
 import { SaleStatus } from '@prisma/client';
+import { BusinessHeaders } from '../common/types';
 
 @Injectable()
 export class SalesService {
   constructor(private prisma: PrismaService) { }
 
-  async getSalesByBusiness(query: GetSalesDto) {
+  async getSalesByBusiness(query: GetSalesDto, headers: BusinessHeaders) {
     const {
-      business_id,
       page = 1,
       limit = 10,
       orderBy = 'created_at',
@@ -21,6 +21,8 @@ export class SalesService {
       created_at,
       updated_at,
     } = query;
+
+    const { business_id } = headers;
 
     if (!business_id) {
       throw new Error('business_id es obligatorio');
@@ -78,13 +80,17 @@ export class SalesService {
     });
   }
 
-  async createSale(data: CreateSaleDto ) {
+  async createSale(data: CreateSaleDto, headers: BusinessHeaders) {
     // data.saleDetails: [{business_product_id, global_product_id, quantity, ...}]
+    const { business_id } = headers;
+    
     return this.prisma.$transaction(async (tx) => {
       // 1. Crear la venta y sus detalles
       const sale = await tx.sale.create({
         data: {
-          ...data,
+          business_id,
+          customer_id: data.customer_id,
+          total_amount: data.total_amount,
           status: data.status as SaleStatus,
           saleDetails: {
             create: data.saleDetails,

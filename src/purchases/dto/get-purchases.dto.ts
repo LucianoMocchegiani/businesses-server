@@ -1,20 +1,21 @@
 import { IsOptional, IsNumber, IsString, IsIn } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class GetPurchasesDto {
-    @ApiProperty({ description: 'ID del negocio' })
-    @IsNumber()
-    business_id: number;
+    // business_id ya no va aquí, viene por header x-business-id
 
     // Paginación
     @ApiPropertyOptional({ description: 'Página actual para paginación', default: 1 })
     @IsOptional()
     @IsNumber()
+    @Transform(({ value }) => value ? parseInt(value) : 1)
     page?: number = 1;
 
     @ApiPropertyOptional({ description: 'Cantidad de resultados por página', default: 10 })
     @IsOptional()
     @IsNumber()
+    @Transform(({ value }) => value ? parseInt(value) : 10)
     limit?: number = 10;
 
     // Ordenamiento
@@ -45,6 +46,7 @@ export class GetPurchasesDto {
     @ApiPropertyOptional({ description: 'Buscar por monto total' })
     @IsOptional()
     @IsNumber()
+    @Transform(({ value }) => value ? parseFloat(value) : undefined)
     total_amount?: number;
 
     @ApiPropertyOptional({ description: 'Buscar por estado de la compra' })

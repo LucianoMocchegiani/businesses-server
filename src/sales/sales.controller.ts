@@ -17,9 +17,8 @@ export class SalesController {
     if (!req.businessId) {
       throw new Error('Business ID is required');
     }
-    // Agregar business_id al query
-    const queryWithBusiness = { ...query, business_id: req.businessId };
-    return this.salesService.getSalesByBusiness(queryWithBusiness);
+    // Pasar headers al servicio
+    return this.salesService.getSalesByBusiness(query, { business_id: req.businessId });
   }
 
   @Get(':id')
@@ -34,8 +33,12 @@ export class SalesController {
   @ApiOperation({ summary: 'Crear una venta' })
   @ApiBody({ type: CreateSaleDto })
   @ApiResponse({ status: 201, description: 'Venta creada' })
-  async createSale(@Body() data: CreateSaleDto) {
-    return this.salesService.createSale(data);
+  async createSale(@Body() data: CreateSaleDto, @Req() req: Request) {
+    if (!req.businessId) {
+      throw new Error('Business ID is required');
+    }
+    // Pasar headers al servicio
+    return this.salesService.createSale(data, { business_id: req.businessId });
   }
 
   @Delete(':id')

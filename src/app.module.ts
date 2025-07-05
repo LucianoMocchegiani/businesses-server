@@ -42,15 +42,18 @@ import { InventoriesController } from './inventories/inventories.controller';
 import { BrandsService } from './brands/brands.service';
 import { BrandsModule } from './brands/brands.module';
 import { BrandsController } from './brands/brands.controller';
+import { ProductsService } from './products/products.service';
+import { ProductsModule } from './products/products.module';
+import { ProductsController } from './products/products.controller';
 
 // Middlewares
 import { AuthMiddleware } from './common/middlewares/auth.middleware';
 import { PermissionMiddleware } from './common/middlewares/permission.middleware';
 
 @Module({
-  imports: [PrismaModule, UsersModule, BusinessesModule, SalesModule, PurchasesModule, GlobalProductsModule, BusinessProductsModule, CategoriesModule, ProfilesModule, ServicesModule, SuppliersModule, CustomersModule, InventoriesModule, BrandsModule],
-  controllers: [AppController, ServicesnpxController, UsersController, BusinessesController, SalesController, PurchasesController, GlobalProductsController, BusinessProductsController, CategoriesController, ProfilesController, ServicesController, SuppliersController, CustomersController, InventoriesController, BrandsController],
-  providers: [AppService, UsersService, BusinessesService, SalesService, PurchasesService, GlobalProductsService, BusinessProductsService, CategoriesService, ProfilesService, ServicesService, SuppliersService, CustomersService, InventoriesService, BrandsService],
+  imports: [PrismaModule, UsersModule, BusinessesModule, SalesModule, PurchasesModule, GlobalProductsModule, BusinessProductsModule, CategoriesModule, ProfilesModule, ServicesModule, SuppliersModule, CustomersModule, InventoriesModule, BrandsModule, ProductsModule],
+  controllers: [AppController, ServicesnpxController, UsersController, BusinessesController, SalesController, PurchasesController, GlobalProductsController, BusinessProductsController, CategoriesController, ProfilesController, ServicesController, SuppliersController, CustomersController, InventoriesController, BrandsController, ProductsController],
+  providers: [AppService, UsersService, BusinessesService, SalesService, PurchasesService, GlobalProductsService, BusinessProductsService, CategoriesService, ProfilesService, ServicesService, SuppliersService, CustomersService, InventoriesService, BrandsService, ProductsService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

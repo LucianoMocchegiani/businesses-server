@@ -17,7 +17,17 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "db:studio": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma studio",
+    "db:pull": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma db pull",
+    "db:push": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma db push",
+    "db:migrate": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma migrate dev",
+    "db:generate": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma generate",
+    "db:debug": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses node debug-db.js",
+    "db:list-businesses": "node scripts/delete-helper.js list-businesses",
+    "db:list-profiles": "node scripts/delete-helper.js list-profiles",
+    "db:delete-business": "node scripts/delete-helper.js delete-business",
+    "db:delete-profile": "node scripts/delete-helper.js delete-profile"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -45,6 +55,7 @@
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",
     "@types/supertest": "^6.0.2",
+    "cross-env": "^7.0.3",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
