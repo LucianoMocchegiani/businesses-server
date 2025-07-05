@@ -6,6 +6,8 @@ declare module 'express-serve-static-core' {
     interface Request {
         user?: { user_id: number; [key: string]: any };
         firebaseUser?: admin.auth.DecodedIdToken;
+        businessId?: number;
+        profileId?: number;
     }
 }
 

@@ -1,14 +1,18 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Req } from '@nestjs/common';
 import { BusinessProductsService } from './business-products.service';
 import { BusinessProduct } from '@prisma/client';
+import { Request } from 'express';
 
 @Controller('business-products')
 export class BusinessProductsController {
   constructor(private readonly businessProductsService: BusinessProductsService) {}
 
   @Get()
-  findAll(): Promise<BusinessProduct[]> {
-    return this.businessProductsService.findAll();
+  findAll(@Req() req: Request): Promise<BusinessProduct[]> {
+    if (!req.businessId) {
+      throw new Error('Business ID is required');
+    }
+    return this.businessProductsService.findAllByBusiness(req.businessId);
   }
 
   @Get(':id')

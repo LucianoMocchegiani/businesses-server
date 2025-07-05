@@ -128,7 +128,7 @@ export class AuthMiddleware implements NestMiddleware {
         next();
       } catch (dbError) {
         console.error('❌ Database connection error:', dbError.message);
-        next();
+        throw new UnauthorizedException('Error de autenticación');
       }
     } catch (err) {
       console.error('❌ Token verification failed:', err);

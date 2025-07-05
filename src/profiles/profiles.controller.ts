@@ -1,14 +1,18 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, Req } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { Profile } from '@prisma/client';
+import { Request } from 'express';
 
 @Controller('profiles')
 export class ProfilesController {
     constructor(private readonly profilesService: ProfilesService) { }
 
     @Get()
-    findAll(@Query('business_id') business_id: number) {
-        return this.profilesService.findAll(Number(business_id));
+    findAll(@Req() req: Request) {
+        if (!req.businessId) {
+            throw new Error('Business ID is required');
+        }
+        return this.profilesService.findAll(req.businessId);
     }
 
     @Get('user/:userId')

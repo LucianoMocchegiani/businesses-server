@@ -1,13 +1,17 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Req } from '@nestjs/common';
 import { InventoriesService } from './inventories.service';
+import { Request } from 'express';
 
 @Controller('inventories')
 export class InventoriesController {
   constructor(private inventoriesService: InventoriesService) {}
 
-  @Get('business/:business_id')
-  async getInventoriesByBusiness(@Param('business_id') business_id: number) {
-    return this.inventoriesService.getInventoriesByBusiness(Number(business_id));
+  @Get()
+  async getInventories(@Req() req: Request) {
+    if (!req.businessId) {
+      throw new Error('Business ID is required');
+    }
+    return this.inventoriesService.getInventoriesByBusiness(req.businessId);
   }
 
   @Get(':id')

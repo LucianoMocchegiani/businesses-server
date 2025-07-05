@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Delete, Query, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Query, Post, Body, Req } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @ApiTags('purchases')
 @Controller('purchases')
@@ -12,8 +13,13 @@ export class PurchasesController {
   @Get()
   @ApiOperation({ summary: 'Obtener compras paginadas y filtradas' })
   @ApiResponse({ status: 200, description: 'Lista de compras' })
-  async getPurchases(@Query() query: GetPurchasesDto) {
-    return this.purchasesService.getPurchasesByBusiness(query);
+  async getPurchases(@Query() query: GetPurchasesDto, @Req() req: Request) {
+    if (!req.businessId) {
+      throw new Error('Business ID is required');
+    }
+    // Agregar business_id al query
+    const queryWithBusiness = { ...query, business_id: req.businessId };
+    return this.purchasesService.getPurchasesByBusiness(queryWithBusiness);
   }
 
   @Get(':id')

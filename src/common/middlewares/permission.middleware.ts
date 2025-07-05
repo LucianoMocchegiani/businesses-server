@@ -54,6 +54,14 @@ export class PermissionMiddleware implements NestMiddleware {
     async use(req: Request, _res: Response, next: NextFunction) {
         const userId = req.user?.user_id;
         
+        // Extraer business_id y profile_id de los headers
+        const businessId = req.headers['x-business-id'] as string;
+        const profileId = req.headers['x-profile-id'] as string;
+        
+        // Agregar al request para que esté disponible en los controladores
+        req.businessId = businessId ? parseInt(businessId) : undefined;
+        req.profileId = profileId ? parseInt(profileId) : undefined;
+        
         // Extraer serviceName correctamente - el índice 2: ['', 'api', 'serviceName']
         const urlParts = req.baseUrl.split('/');
         const serviceName = urlParts[2] || req.url.split('/')[2];
@@ -81,6 +89,15 @@ export class PermissionMiddleware implements NestMiddleware {
             return next();
         }
 
+        // Verificar que vengan los headers requeridos para rutas que NO se saltan
+        if (!businessId) {
+            throw new ForbiddenException('Business ID requerido en headers (x-business-id)');
+        }
+
+        if (!profileId) {
+            throw new ForbiddenException('Profile ID requerido en headers (x-profile-id)');
+        }
+
         if (!userId) {
             throw new ForbiddenException('Usuario no especificado');
         }
@@ -89,18 +106,41 @@ export class PermissionMiddleware implements NestMiddleware {
             throw new ForbiddenException('Servicio no especificado');
         }
 
-        // Busca el perfil del usuario
-        const profileUser = await this.prisma.profileUser.findFirst({
-            where: { user_id: userId },
-            include: { profile: { include: { permissions: { include: { service: true } } } } },
+        // Para rutas que requieren business context, verificar que se proporcionen los headers
+        const requiresBusinessContext = !shouldSkipPermissions;
+        if (requiresBusinessContext && !profileId) {
+            throw new ForbiddenException('Profile ID requerido en headers (x-profile-id)');
+        }
+
+        // Si no se requiere contexto de negocio, continuar sin verificar permisos
+        if (!requiresBusinessContext) {
+            return next();
+        }
+
+        // Buscar el perfil específico y sus permisos
+        const profile = await this.prisma.profile.findUnique({
+            where: { profile_id: parseInt(profileId) },
+            include: { 
+                permissions: { 
+                    include: { service: true } 
+                },
+                profileUsers: {
+                    where: { user_id: userId }
+                }
+            },
         });
 
-        if (!profileUser) {
-            throw new ForbiddenException('Perfil de usuario no encontrado');
+        if (!profile) {
+            throw new ForbiddenException('Perfil no encontrado');
+        }
+
+        // Verificar que el usuario pertenece a este perfil
+        if (profile.profileUsers.length === 0) {
+            throw new ForbiddenException('No tienes acceso a este perfil');
         }
 
         // Busca el permiso para el servicio solicitado
-        const permission = profileUser.profile.permissions.find(
+        const permission = profile.permissions.find(
             (perm) => perm.service.service_name === serviceName
         );
 

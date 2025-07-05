@@ -19,5 +19,5 @@ RUN npm run build
 # Expone el puerto (opcional, pero recomendado)
 EXPOSE 8080
 
-# Comando de inicio
-CMD ["node", "dist/main.js"]
+# Comando de inicio - incluye migraciones automáticas
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma generate && node dist/main.js"]

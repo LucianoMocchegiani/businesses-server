@@ -1,13 +1,17 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Req } from '@nestjs/common';
 import { CustomersService } from './customers.service';
+import { Request } from 'express';
 
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
 
   @Get()
-  findAll(@Param('business_id') business_id: number) {
-    return this.customersService.findAll(Number(business_id));
+  findAll(@Req() req: Request) {
+    if (!req.businessId) {
+      throw new Error('Business ID is required');
+    }
+    return this.customersService.findAll(req.businessId);
   }
 
   @Get(':id')

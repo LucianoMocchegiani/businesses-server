@@ -10,6 +10,13 @@ export class BusinessProductsService {
     return this.prisma.businessProduct.findMany();
   }
 
+  async findAllByBusiness(businessId: number): Promise<BusinessProduct[]> {
+    return this.prisma.businessProduct.findMany({
+      where: { business_id: businessId },
+      orderBy: { created_at: 'desc' }
+    });
+  }
+
   async findOne(business_product_id: number): Promise<BusinessProduct | null> {
     return this.prisma.businessProduct.findUnique({ where: { business_product_id } });
   }

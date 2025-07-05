@@ -12,7 +12,6 @@ if (result.error) {
 // Exportar una función de validación
 export function validateEnvironment() {
   const requiredVars = [
-    'PORT',
     'DATABASE_URL',
     'FIREBASE_SERVICE_ACCOUNT'
   ];

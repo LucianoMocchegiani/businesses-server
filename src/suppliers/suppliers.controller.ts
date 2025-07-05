@@ -1,13 +1,17 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Req } from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
+import { Request } from 'express';
 
 @Controller('suppliers')
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}
 
   @Get()
-  findAll(@Query('business_id') business_id: number) {
-    return this.suppliersService.findAll(Number(business_id));
+  findAll(@Req() req: Request) {
+    if (!req.businessId) {
+      throw new Error('Business ID is required');
+    }
+    return this.suppliersService.findAll(req.businessId);
   }
 
   @Get(':id')

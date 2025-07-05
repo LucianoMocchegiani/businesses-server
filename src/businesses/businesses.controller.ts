@@ -8,7 +8,6 @@ interface CreateBusinessWithOwnerDto {
   address?: string;
   phone?: string;
   owner_profile_name: string;
-  owner_user_id: number;
 }
 
 @Controller('businesses')
@@ -37,8 +36,21 @@ export class BusinessesController {
   }
 
   @Post('with-owner')
-  createWithOwner(@Body() data: CreateBusinessWithOwnerDto) {
-    return this.businessesService.createBusinessWithOwner(data);
+  createWithOwner(@Body() data: CreateBusinessWithOwnerDto, @Req() req: Request) {
+    
+    const userId = req.user?.user_id;
+    
+    if (!userId) {
+      console.error('❌ Usuario no autenticado - req.user:', req.user);
+      throw new UnauthorizedException('Usuario no autenticado');
+    }
+
+    const finalData = {
+      ...data,
+      owner_user_id: userId
+    };
+
+    return this.businessesService.createBusinessWithOwner(finalData);
   }
 
   @Put(':id')
