@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Req } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Req, Headers } from '@nestjs/common';
 import { BusinessProductsService } from './business-products.service';
 import { BusinessProduct } from '@prisma/client';
 import { Request } from 'express';
@@ -21,16 +21,53 @@ export class BusinessProductsController {
   }
 
   @Post()
-  create(@Body() data: Omit<BusinessProduct, 'business_product_id' | 'created_at' | 'updated_at'>): Promise<BusinessProduct> {
-    return this.businessProductsService.create(data);
+  create(
+    @Body() data: any,
+    @Headers('x-business-id') businessId: string
+  ): Promise<BusinessProduct> {
+    if (!businessId) {
+      throw new Error('x-business-id header is required');
+    }
+
+    // Mapear los campos del frontend a los del modelo BusinessProduct
+    const businessProductData = {
+      business_id: parseInt(businessId),
+      custom_name: data.name || data.custom_name,
+      custom_description: data.description || data.custom_description,
+      custom_code: data.code || data.custom_code,
+      creator_id: data.creator_id || null
+    };
+
+    return this.businessProductsService.create(businessProductData);
   }
 
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() data: Partial<Omit<BusinessProduct, 'business_product_id' | 'created_at' | 'updated_at'>>
+    @Body() data: any,
+    @Headers('x-business-id') businessId: string
   ): Promise<BusinessProduct> {
-    return this.businessProductsService.update(Number(id), data);
+    if (!businessId) {
+      throw new Error('x-business-id header is required');
+    }
+
+    // Mapear los campos del frontend a los del modelo BusinessProduct
+    const businessProductData: any = {};
+    
+    if (data.name || data.custom_name) {
+      businessProductData.custom_name = data.name || data.custom_name;
+    }
+    if (data.description || data.custom_description) {
+      businessProductData.custom_description = data.description || data.custom_description;
+    }
+    if (data.code || data.custom_code) {
+      businessProductData.custom_code = data.code || data.custom_code;
+    }
+    if (data.creator_id !== undefined) {
+      businessProductData.creator_id = data.creator_id;
+    }
+
+    return this.businessProductsService.update(Number(id), businessProductData);
   }
 
   @Delete(':id')

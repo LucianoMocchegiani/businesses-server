@@ -28,14 +28,9 @@ export interface ProductResult {
 
 export interface ProductsResponse {
   data: ProductResult[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    globalProducts: number;
-    businessProducts: number;
-  };
+  total: number;
+  page: number;
+  lastPage: number;
 }
 
 export interface InventoryLot {
@@ -264,14 +259,9 @@ export class ProductsService {
 
     return {
       data: paginatedResults,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        globalProducts: globalCount,
-        businessProducts: businessCount,
-      },
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
     };
   }
 

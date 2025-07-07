@@ -53,17 +53,9 @@ export class ProductsController {
                         }
                     }
                 },
-                meta: {
-                    type: 'object',
-                    properties: {
-                        total: { type: 'number', description: 'Total de productos' },
-                        page: { type: 'number', description: 'Página actual' },
-                        limit: { type: 'number', description: 'Límite por página' },
-                        totalPages: { type: 'number', description: 'Total de páginas' },
-                        globalProducts: { type: 'number', description: 'Cantidad de productos globales' },
-                        businessProducts: { type: 'number', description: 'Cantidad de productos del negocio' },
-                    }
-                }
+                total: { type: 'number', description: 'Total de productos' },
+                page: { type: 'number', description: 'Página actual' },
+                lastPage: { type: 'number', description: 'Última página' },
             }
         }
     })
