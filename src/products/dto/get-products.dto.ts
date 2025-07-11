@@ -61,4 +61,10 @@ export class GetProductsDto {
   @IsBoolean()
   @Transform(({ value }) => value === 'true' || value === true)
   only_low_stock?: boolean = false;
+
+  @ApiPropertyOptional({ description: 'Filtrar solo productos que tienen inventario disponible', default: false })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  only_with_inventory?: boolean = false;
 }

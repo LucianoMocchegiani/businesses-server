@@ -82,6 +82,7 @@ export class ProductsService {
       include_business = true,
       include_stock = true,
       only_low_stock = false,
+      only_with_inventory = false,
       page = 1,
       limit = 50,
     } = query;
@@ -240,11 +241,18 @@ export class ProductsService {
       }
     }
 
-    // 3. Filtrar productos con stock bajo si se solicita
+    // 3. Filtrar productos según criterios especiales
     let filteredResults = results;
+    
     if (only_low_stock && include_stock) {
-      filteredResults = results.filter(product => 
+      filteredResults = filteredResults.filter(product => 
         product.stock && product.stock.is_low_stock
+      );
+    }
+    
+    if (only_with_inventory && include_stock) {
+      filteredResults = filteredResults.filter(product => 
+        product.stock && product.stock.quantity > 0
       );
     }
 

@@ -27,6 +27,7 @@ export class ProductsController {
     @ApiQuery({ name: 'include_business', required: false, description: 'Incluir productos del negocio', type: 'boolean' })
     @ApiQuery({ name: 'include_stock', required: false, description: 'Incluir información de stock', type: 'boolean' })
     @ApiQuery({ name: 'only_low_stock', required: false, description: 'Filtrar solo productos con stock bajo', type: 'boolean' })
+    @ApiQuery({ name: 'only_with_inventory', required: false, description: 'Filtrar solo productos que tienen inventario disponible', type: 'boolean' })
     @ApiQuery({ name: 'page', required: false, description: 'Página actual', type: 'number' })
     @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', type: 'number' })
     @ApiResponse({
