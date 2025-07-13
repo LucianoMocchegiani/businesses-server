@@ -1,5 +1,5 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, Headers } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, Headers, HttpException, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader, ApiParam, ApiBody } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { GetCustomersDto } from './dto/get-customers.dto';
 import { BusinessHeaders } from '../common/types';
@@ -39,31 +39,60 @@ export class CustomersController {
       },
     },
   })
-  findAll(@Query() query: GetCustomersDto, @Headers() headers: BusinessHeaders) {
-    return this.customersService.findAll(headers, query);
+  async findAll(@Query() query: GetCustomersDto, @Headers() headers: BusinessHeaders) {
+    try {
+      return await this.customersService.findAll(headers, query);
+    } catch (error) {
+      throw new HttpException(`Error al obtener los clientes: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener cliente por ID' })
-  findOne(@Param('id') id: number) {
-    return this.customersService.findOne(Number(id));
+  @ApiParam({ name: 'id', description: 'ID del cliente' })
+  @ApiResponse({ status: 200, description: 'Cliente encontrado' })
+  async findOne(@Param('id') id: number) {
+    try {
+      return await this.customersService.findOne(Number(id));
+    } catch (error) {
+      throw new HttpException(`Error al obtener el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Post()
   @ApiOperation({ summary: 'Crear nuevo cliente' })
-  create(@Body() data: any) {
-    return this.customersService.create(data);
+  @ApiBody({ description: 'Datos del cliente a crear' })
+  @ApiResponse({ status: 201, description: 'Cliente creado' })
+  async create(@Body() data: any) {
+    try {
+      return await this.customersService.create(data);
+    } catch (error) {
+      throw new HttpException(`Error al crear el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Actualizar cliente' })
-  update(@Param('id') id: number, @Body() data: any) {
-    return this.customersService.update(Number(id), data);
+  @ApiParam({ name: 'id', description: 'ID del cliente' })
+  @ApiBody({ description: 'Datos a actualizar' })
+  @ApiResponse({ status: 200, description: 'Cliente actualizado' })
+  async update(@Param('id') id: number, @Body() data: any) {
+    try {
+      return await this.customersService.update(Number(id), data);
+    } catch (error) {
+      throw new HttpException(`Error al actualizar el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar cliente' })
-  remove(@Param('id') id: number) {
-    return this.customersService.remove(Number(id));
+  @ApiParam({ name: 'id', description: 'ID del cliente' })
+  @ApiResponse({ status: 200, description: 'Cliente eliminado' })
+  async remove(@Param('id') id: number) {
+    try {
+      return await this.customersService.remove(Number(id));
+    } catch (error) {
+      throw new HttpException(`Error al eliminar el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 }

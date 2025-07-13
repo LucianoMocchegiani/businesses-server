@@ -84,80 +84,93 @@ export class SalesService {
     // data.saleDetails: [{business_product_id, global_product_id, quantity, ...}]
     const { business_id } = headers;
     
-    return this.prisma.$transaction(async (tx) => {
-      // 1. Crear la venta y sus detalles
-      const sale = await tx.sale.create({
-        data: {
-          business_id,
-          customer_id: data.customer_id,
-          total_amount: data.total_amount,
-          status: data.status as SaleStatus,
-          saleDetails: {
-            create: data.saleDetails,
-          },
-        },
-        include: { saleDetails: true },
-      });
-
-      // 2. Por cada detalle, actualizar inventario y lotes
-      for (const detail of sale.saleDetails) {
-        // Buscar inventario correspondiente
-        const inventory = await tx.inventory.findFirst({
-          where: {
-            business_id: sale.business_id,
-            OR: [
-              { business_product_id: detail.business_product_id ?? undefined },
-              { global_product_id: detail.global_product_id ?? undefined },
-            ],
-          },
-        });
-
-        if (!inventory) {
-          throw new Error('No hay inventario para el producto vendido');
-        }
-
-        // Verificar stock suficiente
-        if (inventory.stock_quantity_total < detail.quantity) {
-          throw new Error('Stock insuficiente para la venta');
-        }
-
-        // Restar del inventario total
-        await tx.inventory.update({
-          where: { inventory_id: inventory.inventory_id },
+    try {
+      return this.prisma.$transaction(async (tx) => {
+        // 1. Crear la venta y sus detalles
+        const sale = await tx.sale.create({
           data: {
-            stock_quantity_total: {
-              decrement: detail.quantity,
+            business_id,
+            customer_id: data.customer_id,
+            total_amount: data.total_amount,
+            status: data.status as SaleStatus,
+            saleDetails: {
+              create: data.saleDetails,
             },
-            updated_at: new Date(),
           },
+          include: { saleDetails: true },
         });
 
-        // Restar de los lotes (FIFO)
-        let quantityToSubtract = detail.quantity;
-        const lots = await tx.lot.findMany({
-          where: { inventory_id: inventory.inventory_id, stock_quantity: { gt: 0 } },
-          orderBy: { entry_date: 'asc' },
-        });
-
-        for (const lot of lots) {
-          if (quantityToSubtract <= 0) break;
-          const subtract = Math.min(lot.stock_quantity, quantityToSubtract);
-          await tx.lot.update({
-            where: { lot_id: lot.lot_id },
-            data: {
-              stock_quantity: { decrement: subtract },
+        // 2. Por cada detalle, actualizar inventario y lotes
+        for (const detail of sale.saleDetails) {
+          // Buscar inventario correspondiente
+          const inventory = await tx.inventory.findFirst({
+            where: {
+              business_id: sale.business_id,
+              OR: [
+                { business_product_id: detail.business_product_id ?? undefined },
+                { global_product_id: detail.global_product_id ?? undefined },
+              ],
             },
           });
-          quantityToSubtract -= subtract;
+
+          if (!inventory) {
+            // Determinar el tipo de producto para el mensaje de error
+            const productType = detail.business_product_id ? 'business' : 'global';
+            const productId = detail.business_product_id || detail.global_product_id;
+            throw new Error(`No hay inventario para el producto ${productType}-${productId}. Debe crear inventario inicial o realizar una compra primero.`);
+          }
+
+          // Verificar stock suficiente
+          if (inventory.stock_quantity_total < detail.quantity) {
+            const productType = detail.business_product_id ? 'business' : 'global';
+            const productId = detail.business_product_id || detail.global_product_id;
+            throw new Error(`Stock insuficiente para el producto ${productType}-${productId}. Stock disponible: ${inventory.stock_quantity_total}, cantidad solicitada: ${detail.quantity}`);
+          }
+
+          // Restar del inventario total
+          await tx.inventory.update({
+            where: { inventory_id: inventory.inventory_id },
+            data: {
+              stock_quantity_total: {
+                decrement: detail.quantity,
+              },
+              updated_at: new Date(),
+            },
+          });
+
+          // Restar de los lotes (FIFO)
+          let quantityToSubtract = detail.quantity;
+          const lots = await tx.lot.findMany({
+            where: { inventory_id: inventory.inventory_id, stock_quantity: { gt: 0 } },
+            orderBy: { entry_date: 'asc' },
+          });
+
+          for (const lot of lots) {
+            if (quantityToSubtract <= 0) break;
+            const subtract = Math.min(lot.stock_quantity, quantityToSubtract);
+            await tx.lot.update({
+              where: { lot_id: lot.lot_id },
+              data: {
+                stock_quantity: { decrement: subtract },
+              },
+            });
+            quantityToSubtract -= subtract;
+          }
+
+          if (quantityToSubtract > 0) {
+            throw new Error('No hay suficiente stock en los lotes para la venta');
+          }
         }
 
-        if (quantityToSubtract > 0) {
-          throw new Error('No hay suficiente stock en los lotes para la venta');
-        }
-      }
-
-      return sale;
-    });
+        return sale;
+      });
+    } catch (error) {
+      // Cachear el error y loguearlo
+      console.error('Error al crear venta:', error);
+      
+      // Re-lanzar el error para que el controlador lo maneje
+      throw error;
+    }
   }
 
   async cancelSale(saleId: number) {

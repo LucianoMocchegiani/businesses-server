@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Param, Headers } from '@nestjs/common';
+import { Controller, Get, Query, Param, Headers, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { ProductsService, ProductResult, ProductsResponse, ProductInventoryDetail } from './products.service';
 import { GetProductsDto } from './dto/get-products.dto';
@@ -41,22 +41,36 @@ export class ProductsController {
                     items: {
                         type: 'object',
                         properties: {
-                            id: { type: 'string', description: 'ID compuesto (global-123 o business-456)' },
-                            name: { type: 'string', description: 'Nombre del producto' },
-                            description: { type: 'string', description: 'Descripción del producto' },
-                            barcode: { type: 'string', description: 'Código de barras' },
-                            price: { type: 'number', description: 'Precio del producto' },
-                            category: { type: 'string', description: 'Categoría del producto' },
-                            is_active: { type: 'boolean', description: 'Si el producto está activo' },
-                            type: { type: 'string', enum: ['global', 'business'], description: 'Tipo de producto' },
-                            created_at: { type: 'string', format: 'date-time' },
-                            updated_at: { type: 'string', format: 'date-time' },
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            description: { type: 'string' },
+                            barcode: { type: 'string' },
+                            category: { type: 'string' },
+                            type: { type: 'string', enum: ['global', 'business'] },
+                            is_active: { type: 'boolean' },
+                            inventory: {
+                                type: 'object',
+                                properties: {
+                                    stock_quantity_total: { type: 'number' },
+                                    stock_quantity_available: { type: 'number' },
+                                    stock_quantity_reserved: { type: 'number' },
+                                    min_stock_level: { type: 'number' },
+                                    max_stock_level: { type: 'number' },
+                                    is_low_stock: { type: 'boolean' }
+                                }
+                            }
                         }
                     }
                 },
-                total: { type: 'number', description: 'Total de productos' },
-                page: { type: 'number', description: 'Página actual' },
-                lastPage: { type: 'number', description: 'Última página' },
+                pagination: {
+                    type: 'object',
+                    properties: {
+                        page: { type: 'number' },
+                        limit: { type: 'number' },
+                        total: { type: 'number' },
+                        totalPages: { type: 'number' }
+                    }
+                }
             }
         }
     })
@@ -64,11 +78,22 @@ export class ProductsController {
         @Query() query: GetProductsDto,
         @Headers() headers: any
     ): Promise<ProductsResponse> {
-        const businessHeaders: BusinessHeaders = {
-            business_id: parseInt(headers['x-business-id']),
-        };
+        try {
+            const businessHeaders: BusinessHeaders = {
+                business_id: parseInt(headers['x-business-id']),
+            };
 
-        return this.productsService.getAllProducts(query, businessHeaders);
+            if (!businessHeaders.business_id) {
+                throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
+            }
+
+            return await this.productsService.getAllProducts(query, businessHeaders);
+        } catch (error) {
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            throw new HttpException(`Error al obtener los productos: ${error.message}`, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Get(':id')
@@ -113,14 +138,23 @@ export class ProductsController {
         @Param('id') id: string,
         @Headers() headers: any
     ): Promise<ProductResult | null> {
-        const businessHeaders: BusinessHeaders = {
-            business_id: parseInt(headers['x-business-id']),
-        };
+        try {
+            const businessHeaders: BusinessHeaders = {
+                business_id: parseInt(headers['x-business-id']),
+            };
 
-        return this.productsService.getProductById(id, businessHeaders);
+            if (!businessHeaders.business_id) {
+                throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
+            }
+
+            return this.productsService.getProductById(id, businessHeaders);
+        } catch (error) {
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            throw new HttpException(`Error al obtener el producto: ${error.message}`, HttpStatus.BAD_REQUEST);
+        }
     }
-
-
 
     @Get('reports/low-stock')
     @ApiOperation({
@@ -157,11 +191,22 @@ export class ProductsController {
     async getLowStockProducts(
         @Headers() headers: any
     ): Promise<ProductResult[]> {
-        const businessHeaders: BusinessHeaders = {
-            business_id: parseInt(headers['x-business-id']),
-        };
+        try {
+            const businessHeaders: BusinessHeaders = {
+                business_id: parseInt(headers['x-business-id']),
+            };
 
-        return this.productsService.getLowStockProducts(businessHeaders);
+            if (!businessHeaders.business_id) {
+                throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
+            }
+
+            return await this.productsService.getLowStockProducts(businessHeaders);
+        } catch (error) {
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            throw new HttpException(`Error al obtener productos con stock bajo: ${error.message}`, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Get(':id/inventory')
@@ -257,10 +302,21 @@ export class ProductsController {
         @Param('id') id: string,
         @Headers() headers: any
     ): Promise<ProductInventoryDetail | null> {
-        const businessHeaders: BusinessHeaders = {
-            business_id: parseInt(headers['x-business-id']),
-        };
+        try {
+            const businessHeaders: BusinessHeaders = {
+                business_id: parseInt(headers['x-business-id']),
+            };
 
-        return this.productsService.getProductInventoryDetail(id, businessHeaders);
+            if (!businessHeaders.business_id) {
+                throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
+            }
+
+            return await this.productsService.getProductInventoryDetail(id, businessHeaders);
+        } catch (error) {
+            if (error instanceof HttpException) {
+                throw error;
+            }
+            throw new HttpException(`Error al obtener detalles del inventario del producto: ${error.message}`, HttpStatus.BAD_REQUEST);
+        }
     }
 }

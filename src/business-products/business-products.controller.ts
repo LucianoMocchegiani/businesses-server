@@ -1,77 +1,125 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Req, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Req, Headers, HttpException, HttpStatus } from '@nestjs/common';
 import { BusinessProductsService } from './business-products.service';
 import { BusinessProduct } from '@prisma/client';
 import { Request } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
 
+@ApiTags('business-products')
 @Controller('business-products')
 export class BusinessProductsController {
   constructor(private readonly businessProductsService: BusinessProductsService) {}
 
   @Get()
-  findAll(@Req() req: Request): Promise<BusinessProduct[]> {
-    if (!req.businessId) {
-      throw new Error('Business ID is required');
+  @ApiOperation({ summary: 'Obtener todos los productos del negocio' })
+  @ApiResponse({ status: 200, description: 'Lista de productos del negocio' })
+  async findAll(@Req() req: Request): Promise<BusinessProduct[]> {
+    try {
+      if (!req.businessId) {
+        throw new HttpException('Business ID es requerido', HttpStatus.BAD_REQUEST);
+      }
+      return await this.businessProductsService.findAllByBusiness(req.businessId);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(`Error al obtener los productos del negocio: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
-    return this.businessProductsService.findAllByBusiness(req.businessId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<BusinessProduct | null> {
-    return this.businessProductsService.findOne(Number(id));
+  @ApiOperation({ summary: 'Obtener un producto del negocio por ID' })
+  @ApiParam({ name: 'id', description: 'ID del producto del negocio' })
+  @ApiResponse({ status: 200, description: 'Producto del negocio encontrado' })
+  async findOne(@Param('id') id: string): Promise<BusinessProduct | null> {
+    try {
+      return await this.businessProductsService.findOne(Number(id));
+    } catch (error) {
+      throw new HttpException(`Error al obtener el producto del negocio: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Post()
-  create(
+  @ApiOperation({ summary: 'Crear un producto del negocio' })
+  @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
+  @ApiBody({ description: 'Datos del producto del negocio a crear' })
+  @ApiResponse({ status: 201, description: 'Producto del negocio creado' })
+  async create(
     @Body() data: any,
     @Headers('x-business-id') businessId: string
   ): Promise<BusinessProduct> {
-    if (!businessId) {
-      throw new Error('x-business-id header is required');
+    try {
+      if (!businessId) {
+        throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
+      }
+
+      // Mapear los campos del frontend a los del modelo BusinessProduct
+      const businessProductData = {
+        business_id: parseInt(businessId),
+        custom_name: data.name || data.custom_name,
+        custom_description: data.description || data.custom_description,
+        custom_code: data.code || data.custom_code,
+        creator_id: data.creator_id || null
+      };
+
+      return await this.businessProductsService.create(businessProductData);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(`Error al crear el producto del negocio: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
-
-    // Mapear los campos del frontend a los del modelo BusinessProduct
-    const businessProductData = {
-      business_id: parseInt(businessId),
-      custom_name: data.name || data.custom_name,
-      custom_description: data.description || data.custom_description,
-      custom_code: data.code || data.custom_code,
-      creator_id: data.creator_id || null
-    };
-
-    return this.businessProductsService.create(businessProductData);
   }
 
   @Put(':id')
-  update(
+  @ApiOperation({ summary: 'Actualizar un producto del negocio' })
+  @ApiParam({ name: 'id', description: 'ID del producto del negocio' })
+  @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
+  @ApiBody({ description: 'Datos a actualizar' })
+  @ApiResponse({ status: 200, description: 'Producto del negocio actualizado' })
+  async update(
     @Param('id') id: string,
     @Body() data: any,
     @Headers('x-business-id') businessId: string
   ): Promise<BusinessProduct> {
-    if (!businessId) {
-      throw new Error('x-business-id header is required');
-    }
+    try {
+      if (!businessId) {
+        throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
+      }
 
-    // Mapear los campos del frontend a los del modelo BusinessProduct
-    const businessProductData: any = {};
-    
-    if (data.name || data.custom_name) {
-      businessProductData.custom_name = data.name || data.custom_name;
-    }
-    if (data.description || data.custom_description) {
-      businessProductData.custom_description = data.description || data.custom_description;
-    }
-    if (data.code || data.custom_code) {
-      businessProductData.custom_code = data.code || data.custom_code;
-    }
-    if (data.creator_id !== undefined) {
-      businessProductData.creator_id = data.creator_id;
-    }
+      // Mapear los campos del frontend a los del modelo BusinessProduct
+      const businessProductData: any = {};
+      
+      if (data.name || data.custom_name) {
+        businessProductData.custom_name = data.name || data.custom_name;
+      }
+      if (data.description || data.custom_description) {
+        businessProductData.custom_description = data.description || data.custom_description;
+      }
+      if (data.code || data.custom_code) {
+        businessProductData.custom_code = data.code || data.custom_code;
+      }
+      if (data.creator_id !== undefined) {
+        businessProductData.creator_id = data.creator_id;
+      }
 
-    return this.businessProductsService.update(Number(id), businessProductData);
+      return await this.businessProductsService.update(Number(id), businessProductData);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(`Error al actualizar el producto del negocio: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string): Promise<BusinessProduct> {
-    return this.businessProductsService.delete(Number(id));
+  @ApiOperation({ summary: 'Eliminar un producto del negocio' })
+  @ApiParam({ name: 'id', description: 'ID del producto del negocio' })
+  @ApiResponse({ status: 200, description: 'Producto del negocio eliminado' })
+  async delete(@Param('id') id: string): Promise<BusinessProduct> {
+    try {
+      return await this.businessProductsService.delete(Number(id));
+    } catch (error) {
+      throw new HttpException(`Error al eliminar el producto del negocio: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 }

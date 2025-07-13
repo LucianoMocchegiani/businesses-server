@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Delete, Query, Post, Body, Req } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Query, Post, Body, Req, HttpException, HttpStatus } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
@@ -14,11 +14,18 @@ export class PurchasesController {
   @ApiOperation({ summary: 'Obtener compras paginadas y filtradas' })
   @ApiResponse({ status: 200, description: 'Lista de compras' })
   async getPurchases(@Query() query: GetPurchasesDto, @Req() req: Request) {
-    if (!req.businessId) {
-      throw new Error('Business ID is required');
+    try {
+      if (!req.businessId) {
+        throw new HttpException('Business ID es requerido', HttpStatus.BAD_REQUEST);
+      }
+      // Pasar headers al servicio
+      return await this.purchasesService.getPurchasesByBusiness(query, { business_id: req.businessId });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(`Error al obtener las compras: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
-    // Pasar headers al servicio
-    return this.purchasesService.getPurchasesByBusiness(query, { business_id: req.businessId });
   }
 
   @Get(':id')
@@ -26,7 +33,11 @@ export class PurchasesController {
   @ApiParam({ name: 'id', description: 'ID de la compra' })
   @ApiResponse({ status: 200, description: 'Compra encontrada' })
   async getPurchase(@Param('id') id: number) {
-    return this.purchasesService.getPurchaseById(Number(id));
+    try {
+      return await this.purchasesService.getPurchaseById(id);
+    } catch (error) {
+      throw new HttpException(`Error al obtener la compra: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 
   @Post()
@@ -34,11 +45,18 @@ export class PurchasesController {
   @ApiBody({ type: CreatePurchaseDto })
   @ApiResponse({ status: 201, description: 'Compra creada' })
   async createPurchase(@Body() data: CreatePurchaseDto, @Req() req: Request) {
-    if (!req.businessId) {
-      throw new Error('Business ID is required');
+    try {
+      if (!req.businessId) {
+        throw new HttpException('Business ID es requerido', HttpStatus.BAD_REQUEST);
+      }
+      // Pasar headers al servicio
+      return await this.purchasesService.createPurchase(data, { business_id: req.businessId });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(`Error al crear la compra: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
-    // Pasar headers al servicio
-    return this.purchasesService.createPurchase(data, { business_id: req.businessId });
   }
 
   @Delete(':id')
@@ -46,6 +64,10 @@ export class PurchasesController {
   @ApiParam({ name: 'id', description: 'ID de la compra a cancelar' })
   @ApiResponse({ status: 200, description: 'Compra cancelada' })
   async deletePurchase(@Param('id') id: number) {
-    return this.purchasesService.cancelPurchase(Number(id));
+    try {
+      return await this.purchasesService.cancelPurchase(id);
+    } catch (error) {
+      throw new HttpException(`Error al cancelar la compra: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
   }
 }
