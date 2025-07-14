@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, Headers, HttpException, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Put, Param, Delete, Query, HttpException, HttpStatus, Headers } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { GetCustomersDto } from './dto/get-customers.dto';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { BusinessHeaders } from '../common/types';
 
 @ApiTags('Customers')
@@ -21,11 +23,10 @@ export class CustomersController {
   })
   @ApiQuery({ name: 'page', required: false, description: 'Número de página', type: 'number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Cantidad por página', type: 'number' })
-  @ApiQuery({ name: 'orderBy', required: false, description: 'Campo de ordenamiento' })
-  @ApiQuery({ name: 'orderDirection', required: false, description: 'Dirección de ordenamiento' })
-  @ApiQuery({ name: 'name', required: false, description: 'Buscar por nombre' })
-  @ApiQuery({ name: 'email', required: false, description: 'Buscar por email' })
-  @ApiQuery({ name: 'isActive', required: false, description: 'Filtrar por activos', type: 'boolean' })
+  @ApiQuery({ name: 'order_by', required: false, description: 'Campo de ordenamiento' })
+  @ApiQuery({ name: 'order_direction', required: false, description: 'Dirección de ordenamiento' })
+  @ApiQuery({ name: 'customer_name', required: false, description: 'Buscar por nombre' })
+  @ApiQuery({ name: 'contact_email', required: false, description: 'Buscar por email' })
   @ApiResponse({
     status: 200,
     description: 'Lista de clientes obtenida exitosamente',
@@ -35,7 +36,7 @@ export class CustomersController {
         data: { type: 'array', items: { type: 'object' } },
         total: { type: 'number' },
         page: { type: 'number' },
-        lastPage: { type: 'number' },
+        last_page: { type: 'number' },
       },
     },
   })
@@ -48,49 +49,54 @@ export class CustomersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener cliente por ID' })
-  @ApiParam({ name: 'id', description: 'ID del cliente' })
-  @ApiResponse({ status: 200, description: 'Cliente encontrado' })
+  @ApiOperation({ summary: 'Obtener un cliente por ID' })
+  @ApiResponse({ status: 200, description: 'Cliente obtenido exitosamente' })
+  @ApiResponse({ status: 404, description: 'Cliente no encontrado' })
   async findOne(@Param('id') id: number) {
     try {
-      return await this.customersService.findOne(Number(id));
+      const customer = await this.customersService.findOne(id);
+      if (!customer) {
+        throw new HttpException('Cliente no encontrado', HttpStatus.NOT_FOUND);
+      }
+      return customer;
     } catch (error) {
       throw new HttpException(`Error al obtener el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crear nuevo cliente' })
-  @ApiBody({ description: 'Datos del cliente a crear' })
-  @ApiResponse({ status: 201, description: 'Cliente creado' })
-  async create(@Body() data: any) {
+  @ApiOperation({ summary: 'Crear un nuevo cliente' })
+  @ApiHeader({
+    name: 'x-business-id',
+    description: 'ID del negocio',
+    required: true,
+  })
+  @ApiResponse({ status: 201, description: 'Cliente creado exitosamente' })
+  async create(@Body() data: CreateCustomerDto, @Headers() headers: BusinessHeaders) {
     try {
-      return await this.customersService.create(data);
+      return await this.customersService.create(data, headers);
     } catch (error) {
       throw new HttpException(`Error al crear el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Actualizar cliente' })
-  @ApiParam({ name: 'id', description: 'ID del cliente' })
-  @ApiBody({ description: 'Datos a actualizar' })
-  @ApiResponse({ status: 200, description: 'Cliente actualizado' })
-  async update(@Param('id') id: number, @Body() data: any) {
+  @ApiOperation({ summary: 'Actualizar un cliente' })
+  @ApiResponse({ status: 200, description: 'Cliente actualizado exitosamente' })
+  async update(@Param('id') id: number, @Body() data: UpdateCustomerDto) {
     try {
-      return await this.customersService.update(Number(id), data);
+      return await this.customersService.update(id, data);
     } catch (error) {
       throw new HttpException(`Error al actualizar el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar cliente' })
-  @ApiParam({ name: 'id', description: 'ID del cliente' })
-  @ApiResponse({ status: 200, description: 'Cliente eliminado' })
+  @ApiOperation({ summary: 'Eliminar un cliente' })
+  @ApiResponse({ status: 200, description: 'Cliente eliminado exitosamente' })
   async remove(@Param('id') id: number) {
     try {
-      return await this.customersService.remove(Number(id));
+      return await this.customersService.remove(id);
     } catch (error) {
       throw new HttpException(`Error al eliminar el cliente: ${error.message}`, HttpStatus.BAD_REQUEST);
     }

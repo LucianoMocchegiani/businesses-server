@@ -1,8 +1,8 @@
-import { Controller, Get, Param, Delete, Query, Post, Body, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Query, Post, Body, Req, HttpException, HttpStatus, Headers } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
 import { Request } from 'express';
 
 @ApiTags('purchases')
@@ -13,13 +13,10 @@ export class PurchasesController {
   @Get()
   @ApiOperation({ summary: 'Obtener compras paginadas y filtradas' })
   @ApiResponse({ status: 200, description: 'Lista de compras' })
-  async getPurchases(@Query() query: GetPurchasesDto, @Req() req: Request) {
+  async getPurchases(@Query() query: GetPurchasesDto, @Headers('x-business-id') businessId: string) {
     try {
-      if (!req.businessId) {
-        throw new HttpException('Business ID es requerido', HttpStatus.BAD_REQUEST);
-      }
       // Pasar headers al servicio
-      return await this.purchasesService.getPurchasesByBusiness(query, { business_id: req.businessId });
+      return await this.purchasesService.getPurchasesByBusiness(query, { business_id: parseInt(businessId) });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -42,15 +39,15 @@ export class PurchasesController {
 
   @Post()
   @ApiOperation({ summary: 'Crear una compra / Añade o actualiza inventarios' })
+  @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
   @ApiBody({ type: CreatePurchaseDto })
   @ApiResponse({ status: 201, description: 'Compra creada' })
-  async createPurchase(@Body() data: CreatePurchaseDto, @Req() req: Request) {
+  async createPurchase(
+    @Body() data: CreatePurchaseDto, 
+    @Headers('x-business-id') businessId: string
+  ) {
     try {
-      if (!req.businessId) {
-        throw new HttpException('Business ID es requerido', HttpStatus.BAD_REQUEST);
-      }
-      // Pasar headers al servicio
-      return await this.purchasesService.createPurchase(data, { business_id: req.businessId });
+      return await this.purchasesService.createPurchase(data, { business_id: parseInt(businessId) });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;

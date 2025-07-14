@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetSuppliersDto } from './dto/get-suppliers.dto';
+import { CreateSupplierDto } from './dto/create-supplier.dto';
+import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { BusinessHeaders } from '../common/types';
 
 export interface SuppliersResponse {
   data: any[];
   total: number;
   page: number;
-  lastPage: number;
+  last_page: number;
 }
 
 @Injectable()
@@ -16,25 +18,17 @@ export class SuppliersService {
 
   async findAll(headers: BusinessHeaders, dto: GetSuppliersDto): Promise<SuppliersResponse> {
     const businessId = parseInt(headers['x-business-id']);
-    const { page = 1, limit = 10, orderBy = 'createdAt', orderDirection = 'desc', name, email } = dto;
-
-    // Map frontend field names to Prisma field names
-    const fieldMapping = {
-      name: 'supplier_name',
-      email: 'contact_email',
-      createdAt: 'created_at',
-      updatedAt: 'updated_at'
-    };
+    const { page = 1, limit = 10, order_by = 'created_at', order_direction = 'desc', supplier_name, contact_email } = dto;
 
     // Build where clause
     const where: any = { business_id: businessId };
     
-    if (name) {
-      where.supplier_name = { contains: name, mode: 'insensitive' };
+    if (supplier_name) {
+      where.supplier_name = { contains: supplier_name, mode: 'insensitive' };
     }
     
-    if (email) {
-      where.contact_email = { contains: email, mode: 'insensitive' };
+    if (contact_email) {
+      where.contact_email = { contains: contact_email, mode: 'insensitive' };
     }
 
     // Calculate pagination
@@ -43,39 +37,39 @@ export class SuppliersService {
     // Get total count
     const total = await this.prisma.supplier.count({ where });
 
-    // Map orderBy field name
-    const prismaOrderBy = fieldMapping[orderBy] || orderBy;
-
     // Get paginated data
     const data = await this.prisma.supplier.findMany({
       where,
+      orderBy: { [order_by]: order_direction },
       skip,
       take: limit,
-      orderBy: { [prismaOrderBy]: orderDirection },
     });
-
-    // Calculate last page
-    const lastPage = Math.ceil(total / limit);
 
     return {
       data,
       total,
       page,
-      lastPage,
+      last_page: Math.ceil(total / limit),
     };
   }
 
   async findOne(supplierId: number) {
-    return this.prisma.supplier.findUnique({ where: { supplier_id: supplierId } });
-  }
-
-  async create(data: any) {
-    return this.prisma.supplier.create({
-      data: { ...data },
+    return this.prisma.supplier.findUnique({
+      where: { supplier_id: supplierId },
     });
   }
 
-  async update(supplierId: number, data: any) {
+  async create(data: CreateSupplierDto, headers: BusinessHeaders) {
+    
+    return this.prisma.supplier.create({
+      data: {
+        ...data,
+        business_id: headers.business_id,
+      },
+    });
+  }
+
+  async update(supplierId: number, data: UpdateSupplierDto) {
     return this.prisma.supplier.update({
       where: { supplier_id: supplierId },
       data,
@@ -83,6 +77,8 @@ export class SuppliersService {
   }
 
   async remove(supplierId: number) {
-    return this.prisma.supplier.delete({ where: { supplier_id: supplierId } });
+    return this.prisma.supplier.delete({
+      where: { supplier_id: supplierId },
+    });
   }
 }

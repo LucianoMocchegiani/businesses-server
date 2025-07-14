@@ -1,8 +1,8 @@
-import { Controller, Get, Param, Delete, Post, Body, Query, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Post, Body, Query, Req, HttpException, HttpStatus, Headers } from '@nestjs/common';
 import { SalesService } from './sales.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { GetSalesDto } from './dto/get-sales.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
 import { Request } from 'express';
 
 @ApiTags('sales')
@@ -39,15 +39,15 @@ export class SalesController {
 
   @Post()
   @ApiOperation({ summary: 'Crear una venta' })
+  @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
   @ApiBody({ type: CreateSaleDto })
   @ApiResponse({ status: 201, description: 'Venta creada' })
-  async createSale(@Body() data: CreateSaleDto, @Req() req: Request) {
+  async createSale(
+    @Body() data: CreateSaleDto, 
+    @Headers('x-business-id') businessId: string
+  ) {
     try {
-      if (!req.businessId) { 
-        throw new HttpException('Business ID is requerido', HttpStatus.BAD_REQUEST);
-      }
-      // Pasar headers al servicio
-      return await this.salesService.createSale(data, { business_id: req.businessId });
+      return await this.salesService.createSale(data, { business_id: parseInt(businessId) });
     } catch (error) {
       // Manejar errores con códigos de estado apropiados
       throw new HttpException(`Error al crear la venta:${error.message}`, HttpStatus.BAD_REQUEST);

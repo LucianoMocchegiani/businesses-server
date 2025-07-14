@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { GetCustomersDto } from './dto/get-customers.dto';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { BusinessHeaders } from '../common/types';
 
 export interface CustomersResponse {
   data: any[];
   total: number;
   page: number;
-  lastPage: number;
+  last_page: number;
 }
 
 @Injectable()
@@ -16,25 +18,17 @@ export class CustomersService {
 
   async findAll(headers: BusinessHeaders, dto: GetCustomersDto): Promise<CustomersResponse> {
     const businessId = parseInt(headers['x-business-id']);
-    const { page = 1, limit = 10, orderBy = 'createdAt', orderDirection = 'desc', name, email } = dto;
-
-    // Map frontend field names to Prisma field names
-    const fieldMapping = {
-      name: 'customer_name',
-      email: 'contact_email',
-      createdAt: 'created_at',
-      updatedAt: 'updated_at'
-    };
+    const { page = 1, limit = 10, order_by = 'created_at', order_direction = 'desc', customer_name, contact_email } = dto;
 
     // Build where clause
     const where: any = { business_id: businessId };
     
-    if (name) {
-      where.customer_name = { contains: name, mode: 'insensitive' };
+    if (customer_name) {
+      where.customer_name = { contains: customer_name, mode: 'insensitive' };
     }
     
-    if (email) {
-      where.contact_email = { contains: email, mode: 'insensitive' };
+    if (contact_email) {
+      where.contact_email = { contains: contact_email, mode: 'insensitive' };
     }
 
     // Calculate pagination
@@ -43,39 +37,40 @@ export class CustomersService {
     // Get total count
     const total = await this.prisma.customer.count({ where });
 
-    // Map orderBy field name
-    const prismaOrderBy = fieldMapping[orderBy] || orderBy;
-
     // Get paginated data
     const data = await this.prisma.customer.findMany({
       where,
+      orderBy: { [order_by]: order_direction },
       skip,
       take: limit,
-      orderBy: { [prismaOrderBy]: orderDirection },
     });
-
-    // Calculate last page
-    const lastPage = Math.ceil(total / limit);
 
     return {
       data,
       total,
       page,
-      lastPage,
+      last_page: Math.ceil(total / limit),
     };
   }
 
   async findOne(customerId: number) {
-    return this.prisma.customer.findUnique({ where: { customer_id: customerId } });
-  }
-
-  async create(data: any) {
-    return this.prisma.customer.create({
-      data: { ...data },
+    return this.prisma.customer.findUnique({
+      where: { customer_id: customerId },
     });
   }
 
-  async update(customerId: number, data: any) {
+  async create(data: CreateCustomerDto, headers: BusinessHeaders) {
+    const businessId = parseInt(headers['x-business-id']);
+    
+    return this.prisma.customer.create({
+      data: {
+        ...data,
+        business_id: businessId,
+      },
+    });
+  }
+
+  async update(customerId: number, data: UpdateCustomerDto) {
     return this.prisma.customer.update({
       where: { customer_id: customerId },
       data,
@@ -83,6 +78,8 @@ export class CustomersService {
   }
 
   async remove(customerId: number) {
-    return this.prisma.customer.delete({ where: { customer_id: customerId } });
+    return this.prisma.customer.delete({
+      where: { customer_id: customerId },
+    });
   }
 }

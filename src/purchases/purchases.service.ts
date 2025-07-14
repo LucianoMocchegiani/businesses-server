@@ -13,8 +13,8 @@ export class PurchasesService {
     const {
       page = 1,
       limit = 10,
-      orderBy = 'created_at',
-      orderDirection = 'desc',
+      order_by = 'created_at',
+      order_direction = 'desc',
       supplier_name,
       total_amount,
       status,
@@ -30,10 +30,10 @@ export class PurchasesService {
 
     // Prisma orderBy config
     let order: any = {};
-    if (orderBy === 'supplier_name') {
-      order = { supplier: { supplier_name: orderDirection } };
+    if (order_by === 'supplier_name') {
+      order = { supplier: { supplier_name: order_direction } };
     } else {
-      order[orderBy] = orderDirection;
+      order[order_by] = order_direction;
     }
 
     // Prisma where config
@@ -69,7 +69,7 @@ export class PurchasesService {
       data,
       total,
       page,
-      lastPage: Math.ceil(total / limit),
+      last_page: Math.ceil(total / limit),
     };
   }
 

@@ -26,7 +26,7 @@ export class GetPurchasesDto {
     })
     @IsOptional()
     @IsIn(['supplier_name', 'total_amount', 'status', 'created_at', 'updated_at'])
-    orderBy?: 'supplier_name' | 'total_amount' | 'status' | 'created_at' | 'updated_at' = 'created_at';
+    order_by?: 'supplier_name' | 'total_amount' | 'status' | 'created_at' | 'updated_at' = 'created_at';
 
     @ApiPropertyOptional({
         description: 'Dirección de ordenamiento',
@@ -35,7 +35,7 @@ export class GetPurchasesDto {
     })
     @IsOptional()
     @IsIn(['asc', 'desc'])
-    orderDirection?: 'asc' | 'desc' = 'desc';
+    order_direction?: 'asc' | 'desc' = 'desc';
 
     // Filtros de búsqueda
     @ApiPropertyOptional({ description: 'Buscar por nombre del proveedor' })

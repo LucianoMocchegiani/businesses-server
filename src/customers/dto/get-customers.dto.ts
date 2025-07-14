@@ -16,23 +16,23 @@ export class GetCustomersDto {
   @IsNumber()
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Campo por el cual ordenar', enum: ['name', 'email', 'createdAt', 'updatedAt'] })
+  @ApiPropertyOptional({ description: 'Campo por el cual ordenar', enum: ['customer_name', 'contact_email', 'created_at', 'updated_at'] })
   @IsOptional()
-  @IsEnum(['name', 'email', 'createdAt', 'updatedAt'])
-  orderBy?: 'name' | 'email' | 'createdAt' | 'updatedAt' = 'createdAt';
+  @IsEnum(['customer_name', 'contact_email', 'created_at', 'updated_at'])
+  order_by?: 'customer_name' | 'contact_email' | 'created_at' | 'updated_at' = 'created_at';
 
   @ApiPropertyOptional({ description: 'Dirección de ordenamiento', enum: ['asc', 'desc'] })
   @IsOptional()
   @IsEnum(['asc', 'desc'])
-  orderDirection?: 'asc' | 'desc' = 'desc';
+  order_direction?: 'asc' | 'desc' = 'desc';
 
   @ApiPropertyOptional({ description: 'Buscar por nombre del cliente' })
   @IsOptional()
   @IsString()
-  name?: string;
+  customer_name?: string;
 
   @ApiPropertyOptional({ description: 'Buscar por email del cliente' })
   @IsOptional()
   @IsString()
-  email?: string;
+  contact_email?: string;
 }

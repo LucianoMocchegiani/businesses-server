@@ -30,7 +30,7 @@ export interface ProductsResponse {
   data: ProductResult[];
   total: number;
   page: number;
-  lastPage: number;
+  last_page: number;
 }
 
 export interface InventoryLot {
@@ -269,7 +269,7 @@ export class ProductsService {
       data: paginatedResults,
       total,
       page,
-      lastPage: Math.ceil(total / limit),
+      last_page: Math.ceil(total / limit),
     };
   }
 

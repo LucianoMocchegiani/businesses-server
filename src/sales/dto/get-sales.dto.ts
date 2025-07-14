@@ -26,7 +26,7 @@ export class GetSalesDto {
     })
     @IsOptional()
     @IsIn(['customer_name', 'total_amount', 'status', 'created_at', 'updated_at'])
-    orderBy?: 'customer_name' | 'total_amount' | 'status' | 'created_at' | 'updated_at' = 'created_at';
+    order_by?: 'customer_name' | 'total_amount' | 'status' | 'created_at' | 'updated_at' = 'created_at';
 
     @ApiPropertyOptional({
         description: 'Dirección de ordenamiento',
@@ -35,7 +35,7 @@ export class GetSalesDto {
     })
     @IsOptional()
     @IsIn(['asc', 'desc'])
-    orderDirection?: 'asc' | 'desc' = 'desc';
+    order_direction?: 'asc' | 'desc' = 'desc';
 
     // Filtros de búsqueda
     @ApiPropertyOptional({ description: 'Buscar por nombre del cliente' })

@@ -1,8 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, Req, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus, Headers } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { Profile } from '@prisma/client';
-import { Request } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
 
 @ApiTags('profiles')
 @Controller('profiles')
@@ -11,13 +10,11 @@ export class ProfilesController {
 
     @Get()
     @ApiOperation({ summary: 'Obtener todos los perfiles' })
+    @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
     @ApiResponse({ status: 200, description: 'Lista de perfiles' })
-    async findAll(@Req() req: Request) {
+    async findAll(@Headers('x-business-id') businessId: string) {
         try {
-            if (!req.businessId) {
-                throw new HttpException('Business ID es requerido', HttpStatus.BAD_REQUEST);
-            }
-            return await this.profilesService.findAll(req.businessId);
+            return await this.profilesService.findAll(parseInt(businessId));
         } catch (error) {
             if (error instanceof HttpException) {
                 throw error;
@@ -64,11 +61,20 @@ export class ProfilesController {
 
     @Post()
     @ApiOperation({ summary: 'Crear un perfil' })
+    @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
     @ApiBody({ description: 'Datos del perfil a crear' })
     @ApiResponse({ status: 201, description: 'Perfil creado' })
-    async create(@Body() data: any) {
+    async create(
+        @Body() data: any, 
+        @Headers('x-business-id') businessId: string
+    ) {
         try {
-            return await this.profilesService.create(data);
+            const profileData = {
+                ...data,
+                business_id: parseInt(businessId),
+                creator_id: parseInt(data.creator_id) || null
+            }
+            return await this.profilesService.create(profileData);
         } catch (error) {
             throw new HttpException(`Error al crear el perfil: ${error.message}`, HttpStatus.BAD_REQUEST);
         }

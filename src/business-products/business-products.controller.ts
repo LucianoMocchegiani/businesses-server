@@ -48,10 +48,6 @@ export class BusinessProductsController {
     @Headers('x-business-id') businessId: string
   ): Promise<BusinessProduct> {
     try {
-      if (!businessId) {
-        throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
-      }
-
       // Mapear los campos del frontend a los del modelo BusinessProduct
       const businessProductData = {
         business_id: parseInt(businessId),
