@@ -31,11 +31,6 @@ class CreateSaleDetailDto {
   @Transform(({ value }) => Number(value))
   price: number;
 
-  @ApiPropertyOptional({ description: 'Monto total de la línea (opcional)' })
-  @IsOptional()
-  @IsNumber()
-  @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
-  total_amount?: number | null;
 }
 
 export class CreateSaleDto {
@@ -46,12 +41,6 @@ export class CreateSaleDto {
   @IsNumber()
   @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
   customer_id?: number | null;
-
-  @ApiPropertyOptional({ description: 'Monto total de la venta (opcional)' })
-  @IsOptional()
-  @IsNumber()
-  @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
-  total_amount?: number | null;
 
   @ApiPropertyOptional({ description: 'Estado de la venta (opcional)' })
   @IsOptional()

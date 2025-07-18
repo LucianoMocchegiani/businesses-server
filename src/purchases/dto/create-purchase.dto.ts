@@ -31,12 +31,6 @@ class CreatePurchaseDetailDto {
   @Transform(({ value }) => Number(value))
   price: number;
 
-  @ApiPropertyOptional({ description: 'Monto total de la línea (opcional)' })
-  @IsOptional()
-  @IsNumber()
-  @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
-  total_amount?: number | null;
-
   @ApiPropertyOptional({ description: 'Número de lote (opcional)' })
   @IsOptional()
   @IsString()
@@ -63,12 +57,6 @@ export class CreatePurchaseDto {
   @IsNumber()
   @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
   supplier_id?: number | null;
-
-  @ApiPropertyOptional({ description: 'Monto total de la compra (opcional)' })
-  @IsOptional()
-  @IsNumber()
-  @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
-  total_amount?: number | null;
 
   @ApiPropertyOptional({ description: 'Estado de la compra (opcional)' })
   @IsOptional()

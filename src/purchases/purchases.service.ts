@@ -86,16 +86,39 @@ export class PurchasesService {
     // data debe incluir purchaseDetails: [{business_product_id, global_product_id, quantity, lot_number, entry_date, expiration_date, ...}]
     const { business_id } = headers;
     
+    // Mapeo de campos de snake_case para los atributos simples y relaciones en camelCase para Prisma
+    const purchaseDetails = data.purchaseDetails.map(detail => {
+      const total = Number(detail.price) * Number(detail.quantity);
+      const obj: any = {
+        quantity: detail.quantity,
+        price: detail.price,
+        total_amount: total,
+      };
+      if (detail.business_product_id) {
+        obj.businessProduct = { connect: { business_product_id: detail.business_product_id } };
+      }
+      if (detail.global_product_id) {
+        obj.globalProduct = { connect: { product_id: detail.global_product_id } };
+      }
+      return obj;
+    });
+
+    // Calcular el total de la compra sumando los totales calculados de los detalles
+    const totalAmount = purchaseDetails.reduce(
+      (sum, detail) => sum + Number(detail.total_amount || 0),
+      0
+    );
+
     return this.prisma.$transaction(async (tx) => {
       // 1. Crear la compra y sus detalles
       const purchase = await tx.purchase.create({
         data: {
           business_id,
           supplier_id: data.supplier_id,
-          total_amount: data.total_amount,
+          total_amount: totalAmount,
           status: data.status as PurchaseStatus,
           purchaseDetails: {
-            create: data.purchaseDetails,
+            create: purchaseDetails,
           },
         },
         include: { purchaseDetails: true },

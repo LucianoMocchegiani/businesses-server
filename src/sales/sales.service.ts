@@ -85,6 +85,29 @@ export class SalesService {
     // data.saleDetails: [{business_product_id, global_product_id, quantity, ...}]
     const { business_id } = headers;
     
+    // Mapeo de campos de snake_case para los atributos simples y relaciones en camelCase para Prisma
+    const saleDetails = data.saleDetails.map(detail => {
+      const total = Number(detail.price) * Number(detail.quantity);
+      const obj: any = {
+        quantity: detail.quantity,
+        price: detail.price,
+        total_amount: total,
+      };
+      if (detail.business_product_id) {
+        obj.businessProduct = { connect: { business_product_id: detail.business_product_id } };
+      }
+      if (detail.global_product_id) {
+        obj.globalProduct = { connect: { product_id: detail.global_product_id } };
+      }
+      return obj;
+    });
+
+    // Calcular el total de la venta sumando los totales calculados de los detalles
+    const totalAmount = saleDetails.reduce(
+      (sum, detail) => sum + Number(detail.total_amount || 0),
+      0
+    );
+
     try {
       return this.prisma.$transaction(async (tx) => {
         // 1. Crear la venta y sus detalles
@@ -92,10 +115,10 @@ export class SalesService {
           data: {
             business_id,
             customer_id: data.customer_id,
-            total_amount: data.total_amount,
+            total_amount: totalAmount,
             status: data.status as SaleStatus,
             saleDetails: {
-              create: data.saleDetails,
+              create: saleDetails,
             },
           },
           include: { saleDetails: true },
@@ -168,7 +191,6 @@ export class SalesService {
     } catch (error) {
       // Cachear el error y loguearlo
       console.error('Error al crear venta:', error);
-      
       // Re-lanzar el error para que el controlador lo maneje
       throw error;
     }
