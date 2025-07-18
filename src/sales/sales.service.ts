@@ -4,6 +4,7 @@ import { CreateSaleDto } from './dto/create-sale.dto';
 import { GetSalesDto } from './dto/get-sales.dto';
 import { SaleStatus } from '@prisma/client';
 import { BusinessHeaders } from '../common/types';
+import { transformPrismaPaginatedResponse } from '../common/utils/dateUtils';
 
 @Injectable()
 export class SalesService {
@@ -65,12 +66,12 @@ export class SalesService {
       this.prisma.sale.count({ where }),
     ]);
 
-    return {
+    return transformPrismaPaginatedResponse({
       data,
       total,
       page,
       last_page: Math.ceil(total / limit),
-    };
+    });
   }
 
   async getSaleById(saleId: number) {

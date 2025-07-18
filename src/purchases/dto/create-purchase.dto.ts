@@ -4,7 +4,6 @@ import {
   IsString,
   IsArray,
   ValidateNested,
-  IsDateString,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -43,15 +42,17 @@ class CreatePurchaseDetailDto {
   @IsString()
   lot_number?: string | null;
 
-  @ApiPropertyOptional({ description: 'Fecha de ingreso al inventario (opcional)', type: String, format: 'date-time' })
+  @ApiPropertyOptional({ description: 'Fecha de ingreso al inventario (opcional)', type: Number })
   @IsOptional()
-  @IsDateString()
-  entry_date?: Date | string | null;
+  @IsNumber()
+  @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
+  entry_date?: number | null;
 
-  @ApiPropertyOptional({ description: 'Fecha de vencimiento (opcional)', type: String, format: 'date-time' })
+  @ApiPropertyOptional({ description: 'Fecha de vencimiento (opcional)', type: Number })
   @IsOptional()
-  @IsDateString()
-  expiration_date?: Date | string | null;
+  @IsNumber()
+  @Transform(({ value }) => value === null || value === undefined ? value : Number(value))
+  expiration_date?: number | null;
 }
 
 export class CreatePurchaseDto {

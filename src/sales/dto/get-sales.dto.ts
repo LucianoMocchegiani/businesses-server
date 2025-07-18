@@ -54,13 +54,15 @@ export class GetSalesDto {
     @IsString()
     status?: string;
 
-    @ApiPropertyOptional({ description: 'Buscar por fecha de creación (ISO date string)' })
+    @ApiPropertyOptional({ description: 'Buscar por fecha de creación (timestamp)' })
     @IsOptional()
-    @IsString()
-    created_at?: string;
+    @IsNumber()
+    @Transform(({ value }) => value ? parseInt(value) : undefined)
+    created_at?: number;
 
-    @ApiPropertyOptional({ description: 'Buscar por fecha de actualización (ISO date string)' })
+    @ApiPropertyOptional({ description: 'Buscar por fecha de actualización (timestamp)' })
     @IsOptional()
-    @IsString()
-    updated_at?: string;
+    @IsNumber()
+    @Transform(({ value }) => value ? parseInt(value) : undefined)
+    updated_at?: number;
 }

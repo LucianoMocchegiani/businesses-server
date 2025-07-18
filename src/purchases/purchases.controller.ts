@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Delete, Query, Post, Body, Req, HttpException, HttpStatus, Headers } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Query, Post, Body, Req, HttpException, HttpStatus, Headers, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
@@ -7,6 +7,7 @@ import { Request } from 'express';
 
 @ApiTags('purchases')
 @Controller('purchases')
+@UsePipes(new ValidationPipe({ transform: true }))
 export class PurchasesController {
   constructor(private purchasesService: PurchasesService) {}
 

@@ -4,6 +4,7 @@ import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
 import { PurchaseStatus } from '@prisma/client';
 import { BusinessHeaders } from '../common/types';
+import { transformPrismaPaginatedResponse, convertTimestampsToDates } from '../common/utils/dateUtils';
 
 @Injectable()
 export class PurchasesService {
@@ -65,12 +66,12 @@ export class PurchasesService {
       this.prisma.purchase.count({ where }),
     ]);
 
-    return {
+    return transformPrismaPaginatedResponse({
       data,
       total,
       page,
       last_page: Math.ceil(total / limit),
-    };
+    });
   }
 
   async getPurchaseById(purchaseId: number) {
@@ -145,8 +146,8 @@ export class PurchasesService {
           data: {
             inventory_id: inventory.inventory_id,
             lot_number: originalDetail.lot_number ?? null,
-            entry_date: originalDetail.entry_date ?? new Date(),
-            expiration_date: originalDetail.expiration_date ?? null,
+            entry_date: originalDetail.entry_date ? new Date(originalDetail.entry_date) : new Date(),
+            expiration_date: originalDetail.expiration_date ? new Date(originalDetail.expiration_date) : null,
             stock_quantity: detail.quantity,
           },
         });
