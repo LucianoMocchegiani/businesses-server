@@ -1,9 +1,9 @@
-import { Controller, Get, Param, Delete, Query, Post, Body, Req, HttpException, HttpStatus, Headers, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Param, Delete, Query, Post, Put, Body, Req, HttpException, HttpStatus, Headers, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
+import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
-import { Request } from 'express';
 
 @ApiTags('purchases')
 @Controller('purchases')
@@ -54,6 +54,27 @@ export class PurchasesController {
         throw error;
       }
       throw new HttpException(`Error al crear la compra: ${error.message}`, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: 'Actualizar una compra' })
+  @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
+  @ApiParam({ name: 'id', description: 'ID de la compra a actualizar' })
+  @ApiBody({ type: UpdatePurchaseDto })
+  @ApiResponse({ status: 200, description: 'Compra actualizada' })
+  async updatePurchase(
+    @Param('id') id: number,
+    @Body() data: UpdatePurchaseDto, 
+    @Headers('x-business-id') businessId: string
+  ) {
+    try {
+      return await this.purchasesService.updatePurchase(id, data, { business_id: parseInt(businessId) });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(`Error al actualizar la compra: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

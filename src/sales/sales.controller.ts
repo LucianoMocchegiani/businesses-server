@@ -2,7 +2,7 @@ import { Controller, Get, Param, Delete, Post, Body, Query, Req, HttpException, 
 import { SalesService } from './sales.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { GetSalesDto } from './dto/get-sales.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
 import { Request } from 'express';
 
 @ApiTags('sales')

@@ -27,7 +27,8 @@
     "db:list-businesses": "node scripts/delete-helper.js list-businesses",
     "db:list-profiles": "node scripts/delete-helper.js list-profiles",
     "db:delete-business": "node scripts/delete-helper.js delete-business",
-    "db:delete-profile": "node scripts/delete-helper.js delete-profile"
+    "db:delete-profile": "node scripts/delete-helper.js delete-profile",
+    "db:seed": "npx prisma db seed"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -87,5 +88,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "prisma": {
+    "seed": "npx prisma db execute --file prisma/seed.sql --schema prisma/schema.prisma"
   }
 }

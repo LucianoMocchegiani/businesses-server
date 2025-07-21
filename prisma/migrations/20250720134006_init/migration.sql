@@ -62,9 +62,9 @@ CREATE TABLE "GlobalProduct" (
 CREATE TABLE "BusinessProduct" (
     "business_product_id" SERIAL NOT NULL,
     "business_id" INTEGER NOT NULL,
-    "custom_name" TEXT,
-    "custom_description" TEXT,
-    "custom_code" TEXT,
+    "product_name" TEXT,
+    "product_description" TEXT,
+    "product_code" TEXT,
     "creator_id" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -335,13 +335,13 @@ ALTER TABLE "InventoryPrice" ADD CONSTRAINT "InventoryPrice_inventory_id_fkey" F
 ALTER TABLE "Lot" ADD CONSTRAINT "Lot_inventory_id_fkey" FOREIGN KEY ("inventory_id") REFERENCES "Inventory"("inventory_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_global_product_id_fkey" FOREIGN KEY ("global_product_id") REFERENCES "GlobalProduct"("product_id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_business_product_id_fkey" FOREIGN KEY ("business_product_id") REFERENCES "BusinessProduct"("business_product_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "Category"("category_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_global_product_id_fkey" FOREIGN KEY ("global_product_id") REFERENCES "GlobalProduct"("product_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Personnel" ADD CONSTRAINT "Personnel_business_id_fkey" FOREIGN KEY ("business_id") REFERENCES "Business"("business_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -359,10 +359,10 @@ ALTER TABLE "Permission" ADD CONSTRAINT "Permission_profile_id_fkey" FOREIGN KEY
 ALTER TABLE "Permission" ADD CONSTRAINT "Permission_service_id_fkey" FOREIGN KEY ("service_id") REFERENCES "Service"("service_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProfileUser" ADD CONSTRAINT "ProfileUser_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProfileUser" ADD CONSTRAINT "ProfileUser_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "Profile"("profile_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProfileUser" ADD CONSTRAINT "ProfileUser_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "Profile"("profile_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProfileUser" ADD CONSTRAINT "ProfileUser_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("user_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Customer" ADD CONSTRAINT "Customer_business_id_fkey" FOREIGN KEY ("business_id") REFERENCES "Business"("business_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -383,19 +383,19 @@ ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_business_id_fkey" FOREIGN KEY ("
 ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_supplier_id_fkey" FOREIGN KEY ("supplier_id") REFERENCES "Supplier"("supplier_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SaleDetail" ADD CONSTRAINT "SaleDetail_sale_id_fkey" FOREIGN KEY ("sale_id") REFERENCES "Sale"("sale_id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "SaleDetail" ADD CONSTRAINT "SaleDetail_business_product_id_fkey" FOREIGN KEY ("business_product_id") REFERENCES "BusinessProduct"("business_product_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SaleDetail" ADD CONSTRAINT "SaleDetail_global_product_id_fkey" FOREIGN KEY ("global_product_id") REFERENCES "GlobalProduct"("product_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PurchaseDetail" ADD CONSTRAINT "PurchaseDetail_purchase_id_fkey" FOREIGN KEY ("purchase_id") REFERENCES "Purchase"("purchase_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SaleDetail" ADD CONSTRAINT "SaleDetail_sale_id_fkey" FOREIGN KEY ("sale_id") REFERENCES "Sale"("sale_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PurchaseDetail" ADD CONSTRAINT "PurchaseDetail_business_product_id_fkey" FOREIGN KEY ("business_product_id") REFERENCES "BusinessProduct"("business_product_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "PurchaseDetail" ADD CONSTRAINT "PurchaseDetail_global_product_id_fkey" FOREIGN KEY ("global_product_id") REFERENCES "GlobalProduct"("product_id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PurchaseDetail" ADD CONSTRAINT "PurchaseDetail_purchase_id_fkey" FOREIGN KEY ("purchase_id") REFERENCES "Purchase"("purchase_id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -68,9 +68,9 @@ model GlobalProduct {
 model BusinessProduct {
   business_product_id Int               @id @default(autoincrement())
   business_id         Int
-  custom_name         String?
-  custom_description  String?
-  custom_code         String?
+  product_name        String?
+  product_description String?
+  product_code        String?
   creator_id          Int?
   created_at          DateTime          @default(now())
   updated_at          DateTime          @default(now())

@@ -4,10 +4,10 @@ import { GetProductsDto } from './dto/get-products.dto';
 import { BusinessHeaders } from '../common/types';
 
 export interface ProductResult {
-  id: string;
-  name: string;
-  description?: string;
-  barcode?: string;
+  product_id: string;
+  product_name: string;
+  product_description?: string;
+  product_code?: string;
   price?: number;
   category?: string;
   is_active: boolean;
@@ -74,14 +74,11 @@ export class ProductsService {
 
   async getAllProducts(query: GetProductsDto, headers: BusinessHeaders): Promise<ProductsResponse> {
     const {
-      name,
-      barcode,
+      product_name,
+      product_code,
       category,
-      is_active,
       include_global = true,
       include_business = true,
-      include_stock = true,
-      only_low_stock = false,
       only_with_inventory = false,
       page = 1,
       limit = 50,
@@ -99,11 +96,11 @@ export class ProductsService {
 
     // Construir filtros comunes
     const commonWhere: any = {};
-    if (name) {
-      commonWhere.product_name = { contains: name, mode: 'insensitive' };
+    if (product_name) {
+      commonWhere.product_name = { contains: product_name, mode: 'insensitive' };
     }
-    if (barcode) {
-      commonWhere.product_code = { contains: barcode, mode: 'insensitive' };
+    if (product_code) {
+      commonWhere.product_code = { contains: product_code, mode: 'insensitive' };
     }
 
     // 1. Obtener productos globales si está habilitado
@@ -127,7 +124,7 @@ export class ProductsService {
               category: true
             }
           },
-          ...(include_stock && {
+          ...((only_with_inventory) && {
             inventories: {
               where: { business_id }
             }
@@ -143,7 +140,7 @@ export class ProductsService {
         const firstCategory = product.productCategories?.[0]?.category;
         
         // Calcular stock total para este negocio (si se solicita)
-        const stockInfo = include_stock && product.inventories ? (() => {
+        const stockInfo = (only_with_inventory) && product.inventories && product.inventories.length > 0 ? (() => {
           const totalStock = product.inventories.reduce((sum, inv) => sum + inv.stock_quantity_total, 0);
           const lowStockThreshold = 5; // Configurable
           return {
@@ -154,10 +151,10 @@ export class ProductsService {
         })() : undefined;
         
         results.push({
-          id: `global-${product.product_id}`,
-          name: product.product_name,
-          description: product.product_description || undefined,
-          barcode: product.product_code || undefined,
+          product_id: `global-${product.product_id}`,
+          product_name: product.product_name,
+          product_description: product.product_description || undefined,
+          product_code: product.product_code || undefined,
           price: product.generic_sale_price ? Number(product.generic_sale_price) : undefined,
           category: firstCategory?.category_name || undefined,
           is_active: true, // Los productos globales se asumen activos
@@ -175,11 +172,11 @@ export class ProductsService {
       const businessProducts = await this.prisma.businessProduct.findMany({
         where: {
           business_id,
-          ...(name && {
-            custom_name: { contains: name, mode: 'insensitive' }
+          ...(product_name && {
+            product_name: { contains: product_name, mode: 'insensitive' }
           }),
-          ...(barcode && {
-            custom_code: { contains: barcode, mode: 'insensitive' }
+          ...(product_code && {
+            product_code: { contains: product_code, mode: 'insensitive' }
           }),
           ...(category && {
             productCategories: {
@@ -197,13 +194,13 @@ export class ProductsService {
               category: true
             }
           },
-          ...(include_stock && {
+          ...((only_with_inventory) && {
             inventories: {
               where: { business_id }
             }
           })
         },
-        orderBy: { custom_name: 'asc' },
+        orderBy: { product_name: 'asc' },
       });
 
       businessCount = businessProducts.length;
@@ -213,7 +210,7 @@ export class ProductsService {
         const firstCategory = product.productCategories?.[0]?.category;
         
         // Calcular stock total para este negocio (si se solicita)
-        const stockInfo = include_stock && product.inventories ? (() => {
+        const stockInfo = (only_with_inventory) && product.inventories && product.inventories.length > 0 ? (() => {
           const totalStock = product.inventories.reduce((sum, inv) => sum + inv.stock_quantity_total, 0);
           const lowStockThreshold = 5; // Configurable
           return {
@@ -224,10 +221,10 @@ export class ProductsService {
         })() : undefined;
         
         results.push({
-          id: `business-${product.business_product_id}`,
-          name: product.custom_name || 'Sin nombre',
-          description: product.custom_description || undefined,
-          barcode: product.custom_code || undefined,
+          product_id: `business-${product.business_product_id}`,
+          product_name: product.product_name || 'Sin nombre',
+          product_description: product.product_description || undefined,
+          product_code: product.product_code || undefined,
           price: undefined, // Los precios van por separado en InventoryPrice
           category: firstCategory?.category_name || undefined,
           is_active: true, // Los productos del negocio se asumen activos
@@ -244,20 +241,14 @@ export class ProductsService {
     // 3. Filtrar productos según criterios especiales
     let filteredResults = results;
     
-    if (only_low_stock && include_stock) {
+    if (only_with_inventory) {
       filteredResults = filteredResults.filter(product => 
-        product.stock && product.stock.is_low_stock
-      );
-    }
-    
-    if (only_with_inventory && include_stock) {
-      filteredResults = filteredResults.filter(product => 
-        product.stock && product.stock.quantity > 0
+        product.stock !== undefined // Producto tiene inventario registrado
       );
     }
 
     // 4. Ordenar todos los resultados por nombre
-    filteredResults.sort((a, b) => a.name.localeCompare(b.name));
+    filteredResults.sort((a, b) => a.product_name.localeCompare(b.product_name));
 
     // 5. Aplicar paginación
     const total = filteredResults.length;
@@ -310,10 +301,10 @@ export class ProductsService {
       })() : undefined;
 
       return {
-        id: productId,
-        name: globalProduct.product_name,
-        description: globalProduct.product_description || undefined,
-        barcode: globalProduct.product_code || undefined,
+        product_id: productId,
+        product_name: globalProduct.product_name,
+        product_description: globalProduct.product_description || undefined,
+        product_code: globalProduct.product_code || undefined,
         price: globalProduct.generic_sale_price ? Number(globalProduct.generic_sale_price) : undefined,
         category: firstCategory?.category_name || undefined,
         is_active: true,
@@ -355,11 +346,11 @@ export class ProductsService {
         };
       })() : undefined;
 
-      return {
-        id: productId,
-        name: businessProduct.custom_name || 'Sin nombre',
-        description: businessProduct.custom_description || undefined,
-        barcode: businessProduct.custom_code || undefined,
+              return {
+          product_id: productId,
+          product_name: businessProduct.product_name || 'Sin nombre',
+          product_description: businessProduct.product_description || undefined,
+          product_code: businessProduct.product_code || undefined,
         price: undefined,
         category: firstCategory?.category_name || undefined,
         is_active: true,
@@ -414,10 +405,10 @@ export class ProductsService {
         const firstCategory = product.productCategories?.[0]?.category;
 
         results.push({
-          id: `business-${product.business_product_id}`,
-          name: product.custom_name || 'Sin nombre',
-          description: product.custom_description || undefined,
-          barcode: product.custom_code || undefined,
+          product_id: `business-${product.business_product_id}`,
+          product_name: product.product_name || 'Sin nombre',
+          product_description: product.product_description || undefined,
+          product_code: product.product_code || undefined,
           price: undefined,
           category: firstCategory?.category_name || undefined,
           is_active: true,
@@ -432,10 +423,10 @@ export class ProductsService {
         const firstCategory = product.productCategories?.[0]?.category;
 
         results.push({
-          id: `global-${product.product_id}`,
-          name: product.product_name,
-          description: product.product_description || undefined,
-          barcode: product.product_code || undefined,
+          product_id: `global-${product.product_id}`,
+          product_name: product.product_name,
+          product_description: product.product_description || undefined,
+          product_code: product.product_code || undefined,
           price: product.generic_sale_price ? Number(product.generic_sale_price) : undefined,
           category: firstCategory?.category_name || undefined,
           is_active: true,
@@ -518,10 +509,10 @@ export class ProductsService {
 
       return {
         product: {
-          id: productId,
-          name: globalProduct.product_name,
-          description: globalProduct.product_description || undefined,
-          barcode: globalProduct.product_code || undefined,
+          product_id: productId,
+          product_name: globalProduct.product_name,
+          product_description: globalProduct.product_description || undefined,
+          product_code: globalProduct.product_code || undefined,
           price: globalProduct.generic_sale_price ? Number(globalProduct.generic_sale_price) : undefined,
           category: firstCategory?.category_name || undefined,
           is_active: true,
@@ -599,10 +590,10 @@ export class ProductsService {
 
       return {
         product: {
-          id: productId,
-          name: businessProduct.custom_name || 'Sin nombre',
-          description: businessProduct.custom_description || undefined,
-          barcode: businessProduct.custom_code || undefined,
+          product_id: productId,
+          product_name: businessProduct.product_name || 'Sin nombre',
+          product_description: businessProduct.product_description || undefined,
+          product_code: businessProduct.product_code || undefined,
           price: undefined,
           category: firstCategory?.category_name || undefined,
           is_active: true,

@@ -8,23 +8,17 @@ export class GetProductsDto {
   @ApiPropertyOptional({ description: 'Buscar por nombre del producto' })
   @IsOptional()
   @IsString()
-  name?: string;
+  product_name?: string;
 
   @ApiPropertyOptional({ description: 'Buscar por código de barras' })
   @IsOptional()
   @IsString()
-  barcode?: string;
+  product_code?: string;
 
   @ApiPropertyOptional({ description: 'Buscar por categoría' })
   @IsOptional()
   @IsString()
   category?: string;
-
-  @ApiPropertyOptional({ description: 'Filtrar por productos activos' })
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
-  is_active?: boolean;
 
   @ApiPropertyOptional({ description: 'Incluir productos globales en los resultados', default: true })
   @IsOptional()
@@ -50,19 +44,7 @@ export class GetProductsDto {
   @Transform(({ value }) => value ? parseInt(value) : 50)
   limit?: number = 50;
 
-  @ApiPropertyOptional({ description: 'Incluir información de stock en la respuesta', default: true })
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
-  include_stock?: boolean = true;
-
-  @ApiPropertyOptional({ description: 'Filtrar solo productos con stock bajo', default: false })
-  @IsOptional()
-  @IsBoolean()
-  @Transform(({ value }) => value === 'true' || value === true)
-  only_low_stock?: boolean = false;
-
-  @ApiPropertyOptional({ description: 'Filtrar solo productos que tienen inventario disponible', default: false })
+  @ApiPropertyOptional({ description: 'Filtrar solo productos que tienen inventario registrado (sin importar stock)', default: false })
   @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => value === 'true' || value === true)

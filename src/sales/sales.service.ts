@@ -77,7 +77,14 @@ export class SalesService {
   async getSaleById(saleId: number) {
     return this.prisma.sale.findUnique({
       where: { sale_id: saleId },
-      include: { saleDetails: true },
+      include: { 
+        saleDetails: {
+          include: {
+            businessProduct: true,
+            globalProduct: true,
+          }
+        } 
+      },
     });
   }
 
@@ -255,9 +262,14 @@ export class SalesService {
         }
       }
 
-      // 3. Eliminar la venta y sus detalles
-      await tx.saleDetail.deleteMany({ where: { sale_id: saleId } });
-      await tx.sale.delete({ where: { sale_id: saleId } });
+      // 3. Cambiar el estado de la venta a CANCELED (en lugar de eliminar)
+      await tx.sale.update({
+        where: { sale_id: saleId },
+        data: {
+          status: 'CANCELED',
+          updated_at: new Date(),
+        },
+      });
 
       return { message: 'Venta cancelada y stock restaurado' };
     });

@@ -19,15 +19,12 @@ export class ProductsController {
         description: 'ID del negocio',
         required: true,
     })
-    @ApiQuery({ name: 'name', required: false, description: 'Buscar por nombre del producto' })
-    @ApiQuery({ name: 'barcode', required: false, description: 'Buscar por código de barras' })
+    @ApiQuery({ name: 'product_name', required: false, description: 'Buscar por nombre del producto' })
+    @ApiQuery({ name: 'product_code', required: false, description: 'Buscar por código de barras' })
     @ApiQuery({ name: 'category', required: false, description: 'Buscar por categoría' })
-    @ApiQuery({ name: 'is_active', required: false, description: 'Filtrar por productos activos' })
     @ApiQuery({ name: 'include_global', required: false, description: 'Incluir productos globales', type: 'boolean' })
     @ApiQuery({ name: 'include_business', required: false, description: 'Incluir productos del negocio', type: 'boolean' })
-    @ApiQuery({ name: 'include_stock', required: false, description: 'Incluir información de stock', type: 'boolean' })
-    @ApiQuery({ name: 'only_low_stock', required: false, description: 'Filtrar solo productos con stock bajo', type: 'boolean' })
-    @ApiQuery({ name: 'only_with_inventory', required: false, description: 'Filtrar solo productos que tienen inventario disponible', type: 'boolean' })
+    @ApiQuery({ name: 'only_with_inventory', required: false, description: 'Filtrar solo productos que tienen inventario registrado (sin importar stock)', type: 'boolean' })
     @ApiQuery({ name: 'page', required: false, description: 'Página actual', type: 'number' })
     @ApiQuery({ name: 'limit', required: false, description: 'Cantidad de resultados por página', type: 'number' })
     @ApiResponse({
@@ -188,26 +185,6 @@ export class ProductsController {
             }
         }
     })
-    async getLowStockProducts(
-        @Headers() headers: any
-    ): Promise<ProductResult[]> {
-        try {
-            const businessHeaders: BusinessHeaders = {
-                business_id: parseInt(headers['x-business-id']),
-            };
-
-            if (!businessHeaders.business_id) {
-                throw new HttpException('x-business-id header es requerido', HttpStatus.BAD_REQUEST);
-            }
-
-            return await this.productsService.getLowStockProducts(businessHeaders);
-        } catch (error) {
-            if (error instanceof HttpException) {
-                throw error;
-            }
-            throw new HttpException(`Error al obtener productos con stock bajo: ${error.message}`, HttpStatus.BAD_REQUEST);
-        }
-    }
 
     @Get(':id/inventory')
     @ApiOperation({

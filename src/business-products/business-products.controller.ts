@@ -51,9 +51,9 @@ export class BusinessProductsController {
       // Mapear los campos del frontend a los del modelo BusinessProduct
       const businessProductData = {
         business_id: parseInt(businessId),
-        custom_name: data.name || data.custom_name,
-        custom_description: data.description || data.custom_description,
-        custom_code: data.code || data.custom_code,
+        product_name: data.name || data.product_name,
+        product_description: data.description || data.product_description,
+        product_code: data.code || data.product_code,
         creator_id: data.creator_id || null
       };
 
@@ -85,14 +85,14 @@ export class BusinessProductsController {
       // Mapear los campos del frontend a los del modelo BusinessProduct
       const businessProductData: any = {};
       
-      if (data.name || data.custom_name) {
-        businessProductData.custom_name = data.name || data.custom_name;
+      if (data.name || data.product_name) {
+        businessProductData.product_name = data.name || data.product_name;
       }
-      if (data.description || data.custom_description) {
-        businessProductData.custom_description = data.description || data.custom_description;
+      if (data.description || data.product_description) {
+        businessProductData.product_description = data.description || data.product_description;
       }
-      if (data.code || data.custom_code) {
-        businessProductData.custom_code = data.code || data.custom_code;
+      if (data.code || data.product_code) {
+        businessProductData.product_code = data.code || data.product_code;
       }
       if (data.creator_id !== undefined) {
         businessProductData.creator_id = data.creator_id;

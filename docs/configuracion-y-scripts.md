@@ -201,6 +201,7 @@ npm run db:migrate
 | `db:pull` | Importar schema de DB existente | localhost |
 | `db:push` | Desarrollo rápido (sin migraciones) | localhost |
 | `db:migrate` | Crear migraciones para cambios | localhost |
+| `db:seed` | Insertar datos iniciales | localhost |
 
 ## 📋 Flujos de Trabajo
 
@@ -220,7 +221,10 @@ npm install
 npm run db:generate
 npm run db:migrate
 
-# Paso 4: Verificar configuración
+# Paso 4: Ejecutar seed de datos
+npm run db:seed
+
+# Paso 5: Verificar configuración
 npm run db:studio  # Abrir interfaz visual
 npm run db:debug   # Ver datos en terminal
 
@@ -259,6 +263,71 @@ npm run db:generate
 # 2. Crear migración
 npm run db:migrate
 # 3. Regenerar cliente (automático con migrate)
+```
+
+## 🌱 Seed de Datos
+
+### ¿Qué es el Seed?
+
+El seed es un proceso que inserta datos iniciales en la base de datos, como servicios básicos del sistema, categorías por defecto, etc.
+
+### Scripts de Seed
+
+```bash
+# Ejecutar seed manualmente
+npm run db:seed
+
+# Reset completo + seed automático
+npx prisma migrate reset
+```
+
+### Configuración Automática
+
+El seed se ejecuta automáticamente en estos casos:
+- ✅ `npx prisma migrate reset` - **SÍ ejecuta seed**
+- ✅ `npx prisma db seed` - **SÍ ejecuta seed**
+- ❌ `npx prisma migrate dev` - **NO ejecuta seed**
+- ❌ `npx prisma db push` - **NO ejecuta seed**
+
+### Datos que se insertan
+
+El archivo `prisma/seed.sql` inserta:
+- Servicios básicos del sistema (users, products, sales, etc.)
+- Configuraciones iniciales necesarias para el funcionamiento
+
+### Para Docker/Producción
+
+En entornos Docker, el seed debe ejecutarse en runtime, NO en build:
+
+```yaml
+# docker-compose.yml (Recomendado)
+services:
+  app:
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && npm run start:prod"
+    depends_on:
+      db:
+        condition: service_healthy
+```
+
+```bash
+# Script de inicio (Alternativa)
+#!/bin/bash
+npx prisma migrate deploy
+npx prisma db seed
+npm run start:prod
+```
+
+### Verificar Seed
+
+```bash
+# Verificar que los servicios se insertaron
+npm run db:studio
+# → Ir a tabla "Service" → Debería tener 10 registros
+
+# Verificar desde terminal
+npm run db:debug
+# → Muestra resumen incluyendo servicios
+```
 ```
 
 ### 4. Despliegue en Producción
