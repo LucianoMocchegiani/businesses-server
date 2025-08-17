@@ -1,9 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus } from '@nestjs/common';
 import { GlobalProductsService } from './global-products.service';
 import { GlobalProduct } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('global-products')
+@ApiBearerAuth()
 @Controller('global-products')
 export class GlobalProductsController {
   constructor(private readonly globalProductsService: GlobalProductsService) {}

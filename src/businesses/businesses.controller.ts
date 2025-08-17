@@ -2,16 +2,11 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Req, UnauthorizedExcep
 import { Request } from 'express';
 import { BusinessesService } from './businesses.service';
 import { Business } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
-
-interface CreateBusinessWithOwnerDto {
-  name: string;
-  address?: string;
-  phone?: string;
-  owner_profile_name: string;
-}
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
+import { CreateBusinessDto, CreateBusinessWithOwnerDto } from './dto';
 
 @ApiTags('businesses')
+@ApiBearerAuth()
 @Controller('businesses')
 export class BusinessesController {
   constructor(private readonly businessesService: BusinessesService) { }
@@ -28,6 +23,7 @@ export class BusinessesController {
   }
 
   @Get('user')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtener negocios del usuario autenticado' })
   @ApiResponse({ status: 200, description: 'Lista de negocios del usuario' })
   async findUserBusinesses(@Req() req: Request) {
@@ -59,19 +55,29 @@ export class BusinessesController {
 
   @Post()
   @ApiOperation({ summary: 'Crear un negocio' })
-  @ApiBody({ description: 'Datos del negocio a crear' })
+  @ApiBody({ type: CreateBusinessDto, description: 'Datos del negocio a crear' })
   @ApiResponse({ status: 201, description: 'Negocio creado' })
-  async create(@Body() data: Omit<Business, 'business_id' | 'created_at' | 'updated_at'>): Promise<Business> {
+  async create(@Body() data: CreateBusinessDto): Promise<Business> {
     try {
-      return await this.businessesService.create(data);
+      // Transformar undefined a null para compatibilidad con Prisma
+      const businessData = {
+        business_name: data.business_name,
+        business_address: data.business_address || null,
+        business_phone: data.business_phone || null,
+        cuil: data.cuil || null,
+        owner_id: data.owner_id
+      };
+      
+      return await this.businessesService.create(businessData);
     } catch (error) {
       throw new HttpException(`Error al crear el negocio: ${error.message}`, HttpStatus.BAD_REQUEST);
     }
   }
 
   @Post('with-owner')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear un negocio con propietario' })
-  @ApiBody({ description: 'Datos del negocio y propietario' })
+  @ApiBody({ type: CreateBusinessWithOwnerDto, description: 'Datos del negocio y propietario' })
   @ApiResponse({ status: 201, description: 'Negocio creado con propietario' })
   async createWithOwner(@Body() data: CreateBusinessWithOwnerDto, @Req() req: Request) {
     try {

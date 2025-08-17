@@ -36,29 +36,38 @@ import { SuppliersController } from './suppliers/suppliers.controller';
 import { CustomersService } from './customers/customers.service';
 import { CustomersModule } from './customers/customers.module';
 import { CustomersController } from './customers/customers.controller';
-import { InventoriesService } from './inventories/inventories.service';
-import { InventoriesModule } from './inventories/inventories.module';
-import { InventoriesController } from './inventories/inventories.controller';
 import { BrandsService } from './brands/brands.service';
 import { BrandsModule } from './brands/brands.module';
 import { BrandsController } from './brands/brands.controller';
 import { ProductsService } from './products/products.service';
 import { ProductsModule } from './products/products.module';
 import { ProductsController } from './products/products.controller';
+import { InventoryPricesModule } from './inventory-prices/inventory-prices.module';
 
 // Middlewares
 import { AuthMiddleware } from './common/middlewares/auth.middleware';
 import { PermissionMiddleware } from './common/middlewares/permission.middleware';
 
 @Module({
-  imports: [PrismaModule, UsersModule, BusinessesModule, SalesModule, PurchasesModule, GlobalProductsModule, BusinessProductsModule, CategoriesModule, ProfilesModule, ServicesModule, SuppliersModule, CustomersModule, InventoriesModule, BrandsModule, ProductsModule],
-  controllers: [AppController, ServicesnpxController, UsersController, BusinessesController, SalesController, PurchasesController, GlobalProductsController, BusinessProductsController, CategoriesController, ProfilesController, ServicesController, SuppliersController, CustomersController, InventoriesController, BrandsController, ProductsController],
-  providers: [AppService, UsersService, BusinessesService, SalesService, PurchasesService, GlobalProductsService, BusinessProductsService, CategoriesService, ProfilesService, ServicesService, SuppliersService, CustomersService, InventoriesService, BrandsService, ProductsService],
+  imports: [PrismaModule, UsersModule, BusinessesModule, SalesModule, PurchasesModule, GlobalProductsModule, BusinessProductsModule, CategoriesModule, ProfilesModule, ServicesModule, SuppliersModule, CustomersModule, BrandsModule, ProductsModule, InventoryPricesModule],
+  controllers: [AppController, ServicesnpxController, UsersController, BusinessesController, SalesController, PurchasesController, GlobalProductsController, BusinessProductsController, CategoriesController, ProfilesController, ServicesController, SuppliersController, CustomersController, BrandsController, ProductsController],
+  providers: [AppService, UsersService, BusinessesService, SalesService, PurchasesService, GlobalProductsService, BusinessProductsService, CategoriesService, ProfilesService, ServicesService, SuppliersService, CustomersService, BrandsService, ProductsService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthMiddleware, PermissionMiddleware)
+      .exclude(
+        // Rutas completamente públicas (sin autenticación)
+        { path: 'health', method: RequestMethod.GET },
+        { path: 'firebase-status', method: RequestMethod.GET },
+        { path: 'docs', method: RequestMethod.GET },
+        { path: 'docs/(.*)', method: RequestMethod.GET },
+        { path: 'auth/login', method: RequestMethod.POST }, // Login endpoint
+        { path: 'auth/signup', method: RequestMethod.POST }, // Signup endpoint
+        { path: 'users', method: RequestMethod.POST }, // Crear usuario después de signup
+        { path: '', method: RequestMethod.GET }, // Root path
+      )
       .forRoutes({ path: '*', method: RequestMethod.ALL }); 
   }
 }

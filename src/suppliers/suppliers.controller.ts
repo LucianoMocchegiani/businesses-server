@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Put, Param, Delete, Query, HttpException, HttpStatus, Headers } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { SuppliersService } from './suppliers.service';
 import { GetSuppliersDto } from './dto/get-suppliers.dto';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
@@ -7,6 +7,9 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { BusinessHeaders } from '../common/types';
 
 @ApiTags('Suppliers')
+@ApiBearerAuth()
+@ApiSecurity('business-id')
+@ApiSecurity('profile-id')
 @Controller('suppliers')
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}

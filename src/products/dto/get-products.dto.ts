@@ -32,6 +32,12 @@ export class GetProductsDto {
   @Transform(({ value }) => value === 'true' || value === true)
   include_business?: boolean = true;
 
+  @ApiPropertyOptional({ description: 'Incluir precios de venta en la respuesta', default: false })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  include_price?: boolean = false;
+
   @ApiPropertyOptional({ description: 'Página actual para paginación', default: 1 })
   @IsOptional()
   @IsNumber()

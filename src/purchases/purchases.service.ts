@@ -168,7 +168,7 @@ export class PurchasesService {
               stock_quantity_total: {
                 increment: detail.quantity,
               },
-              updated_at: new Date(),
+              updated_at: new Date().getTime(),
             },
           });
         } else {
@@ -183,6 +183,16 @@ export class PurchasesService {
           });
         }
 
+        // Crear precio de compra para el inventario
+        await tx.inventoryPrice.create({
+          data: {
+            inventory_id: inventory.inventory_id,
+            price_type: 'BUY',
+            price: detail.price,
+            valid_from: new Date().getTime(),
+          },
+        });
+
         // Tomar los datos de lote desde el DTO original, ya que purchaseDetails de Prisma no los incluye
         const originalDetail = data.purchaseDetails[i];
 
@@ -191,8 +201,8 @@ export class PurchasesService {
           data: {
             inventory_id: inventory.inventory_id,
             lot_number: originalDetail.lot_number ?? null,
-            entry_date: originalDetail.entry_date ? new Date(originalDetail.entry_date) : new Date(),
-            expiration_date: originalDetail.expiration_date ? new Date(originalDetail.expiration_date) : null,
+            entry_date: originalDetail.entry_date ? originalDetail.entry_date : null,
+            expiration_date: originalDetail.expiration_date ? originalDetail.expiration_date : null,
             stock_quantity: detail.quantity,
           },
         });
@@ -267,7 +277,7 @@ export class PurchasesService {
           supplier_id: data.supplier_id,
           total_amount: totalAmount,
           status: data.status as PurchaseStatus,
-          updated_at: new Date(),
+          updated_at: new Date().getTime(),
           purchaseDetails: {
             create: purchaseDetails || [],
           },
@@ -297,7 +307,7 @@ export class PurchasesService {
               stock_quantity_total: {
                 increment: detail.quantity,
               },
-              updated_at: new Date(),
+              updated_at: new Date().getTime(),
             },
           });
         } else {
@@ -320,8 +330,8 @@ export class PurchasesService {
           data: {
             inventory_id: inventory.inventory_id,
             lot_number: originalDetail?.lot_number ?? null,
-            entry_date: originalDetail?.entry_date ? new Date(originalDetail.entry_date) : new Date(),
-            expiration_date: originalDetail?.expiration_date ? new Date(originalDetail.expiration_date) : null,
+            entry_date: originalDetail?.entry_date ? originalDetail.entry_date : null,
+            expiration_date: originalDetail?.expiration_date ? originalDetail.expiration_date : null,
             stock_quantity: detail.quantity,
           },
         });
@@ -365,7 +375,7 @@ export class PurchasesService {
             stock_quantity_total: {
               decrement: detail.quantity,
             },
-            updated_at: new Date(),
+            updated_at: new Date().getTime(),
           },
         });
 
@@ -394,7 +404,7 @@ export class PurchasesService {
         where: { purchase_id: purchaseId },
         data: {
           status: 'CANCELED',
-          updated_at: new Date(),
+          updated_at: new Date().getTime(),
         },
       });
 

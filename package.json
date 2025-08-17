@@ -21,14 +21,15 @@
     "db:studio": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma studio",
     "db:pull": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma db pull",
     "db:push": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma db push",
-    "db:migrate": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma migrate dev",
+    "db:reset": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma db push --force-reset",
     "db:generate": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses npx prisma generate",
     "db:debug": "cross-env DATABASE_URL=postgresql://postgres:postgres@localhost:5432/businesses node debug-db.js",
     "db:list-businesses": "node scripts/delete-helper.js list-businesses",
     "db:list-profiles": "node scripts/delete-helper.js list-profiles",
     "db:delete-business": "node scripts/delete-helper.js delete-business",
     "db:delete-profile": "node scripts/delete-helper.js delete-profile",
-    "db:seed": "npx prisma db seed"
+    "db:seed": "npx prisma db seed",
+    "db:setup": "npm run db:reset && npm run db:seed"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

@@ -33,6 +33,9 @@ PORT=8080
 
 # Entorno
 NODE_ENV=development
+
+# Logging detallado (opcional - por defecto true en development)
+ENABLE_DETAILED_LOGGING=true
 ```
 
 ### 2. Configuración de Base de Datos PostgreSQL

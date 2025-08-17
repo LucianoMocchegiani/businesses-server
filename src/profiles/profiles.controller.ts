@@ -1,9 +1,12 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpException, HttpStatus, Headers } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { Profile } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 
 @ApiTags('profiles')
+@ApiBearerAuth()
+@ApiSecurity('business-id')
+@ApiSecurity('profile-id')
 @Controller('profiles')
 export class ProfilesController {
     constructor(private readonly profilesService: ProfilesService) { }

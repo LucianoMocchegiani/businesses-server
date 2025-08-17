@@ -2,7 +2,7 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Req, Headers, HttpExce
 import { BusinessProductsService } from './business-products.service';
 import { BusinessProduct } from '@prisma/client';
 import { Request } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 
 @ApiTags('business-products')
 @Controller('business-products')
@@ -39,8 +39,12 @@ export class BusinessProductsController {
   }
 
   @Post()
+  @ApiBearerAuth()
+  @ApiSecurity('business-id')
+  @ApiSecurity('profile-id') 
   @ApiOperation({ summary: 'Crear un producto del negocio' })
   @ApiHeader({ name: 'x-business-id', description: 'ID del negocio', required: true })
+  @ApiHeader({ name: 'x-profile-id', description: 'ID del perfil', required: true })
   @ApiBody({ description: 'Datos del producto del negocio a crear' })
   @ApiResponse({ status: 201, description: 'Producto del negocio creado' })
   async create(

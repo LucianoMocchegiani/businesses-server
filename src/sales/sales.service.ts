@@ -165,7 +165,7 @@ export class SalesService {
               stock_quantity_total: {
                 decrement: detail.quantity,
               },
-              updated_at: new Date(),
+              updated_at: new Date().getTime(),
             },
           });
 
@@ -237,7 +237,7 @@ export class SalesService {
             stock_quantity_total: {
               increment: detail.quantity,
             },
-            updated_at: new Date(),
+            updated_at: new Date().getTime(),
           },
         });
 
@@ -267,7 +267,7 @@ export class SalesService {
         where: { sale_id: saleId },
         data: {
           status: 'CANCELED',
-          updated_at: new Date(),
+          updated_at: new Date().getTime(),
         },
       });
 

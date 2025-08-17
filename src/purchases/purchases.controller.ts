@@ -3,9 +3,12 @@ import { PurchasesService } from './purchases.service';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { GetPurchasesDto } from './dto/get-purchases.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiHeader, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 
 @ApiTags('purchases')
+@ApiBearerAuth()
+@ApiSecurity('business-id')
+@ApiSecurity('profile-id')
 @Controller('purchases')
 @UsePipes(new ValidationPipe({ transform: true }))
 export class PurchasesController {

@@ -6,6 +6,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { BigIntSerializationInterceptor } from './common/interceptors/bigint-serialization.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   // Validar variables de entorno antes de inicializar la aplicación
@@ -44,12 +46,20 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
   }));
 
+  // Global interceptors
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new BigIntSerializationInterceptor()
+  );
+
   // Swagger config
   const config = new DocumentBuilder()
     .setTitle('Business Admin API')
     .setDescription('API documentation')
     .setVersion('1.0')
     .addBearerAuth()
+    .addApiKey({ type: 'apiKey', name: 'x-business-id', in: 'header' }, 'business-id')
+    .addApiKey({ type: 'apiKey', name: 'x-profile-id', in: 'header' }, 'profile-id')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

@@ -2,7 +2,8 @@ import { Controller, Get, Post, Param, Body, Req, HttpException, HttpStatus } fr
 import { Request } from 'express';
 import { UsersService } from './users.service';
 import { User } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { CreateUserDto } from './dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -10,6 +11,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtener todos los usuarios' })
   @ApiResponse({ status: 200, description: 'Lista de usuarios' })
   async findAll(): Promise<User[]> {
@@ -21,6 +23,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtener un usuario por ID' })
   @ApiParam({ name: 'id', description: 'ID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario encontrado' })
@@ -33,6 +36,7 @@ export class UsersController {
   }
 
   @Get('firebase/:uid')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtener un usuario por Firebase UID' })
   @ApiParam({ name: 'uid', description: 'Firebase UID del usuario' })
   @ApiResponse({ status: 200, description: 'Usuario encontrado' })
@@ -46,21 +50,11 @@ export class UsersController {
 
   @Post()
   @ApiOperation({ summary: 'Crear un usuario' })
-  @ApiBody({ description: 'Datos del usuario a crear' })
+  @ApiBody({ type: CreateUserDto, description: 'Datos del usuario a crear' })
   @ApiResponse({ status: 201, description: 'Usuario creado' })
-  async create(@Body() data: any, @Req() req: Request): Promise<User> {
+  async create(@Body() data: CreateUserDto, @Req() req: Request): Promise<User> {
     try {
-      // Si viene de Firebase Auth, usar esos datos; si no, usar los datos del body
-      const userData = req.firebaseUser ? {
-        firebase_uid: req.firebaseUser.uid,
-        full_name: req.firebaseUser.name || data.full_name || req.firebaseUser.email?.split('@')[0] || 'Usuario',
-        ...data // Permitir que otros campos del body sobrescriban (excepto email que no existe en el modelo)
-      } : data;
-
-      // Remover campos que no existen en el modelo User
-      const { email, ...validUserData } = userData;
-
-      return await this.usersService.create(validUserData);
+      return await this.usersService.create(data);
     } catch (error) {
       throw new HttpException(`Error al crear el usuario: ${error.message}`, HttpStatus.BAD_REQUEST);
     }

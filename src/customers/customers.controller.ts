@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Put, Param, Delete, Query, HttpException, HttpStatus, Headers } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiHeader, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { GetCustomersDto } from './dto/get-customers.dto';
 import { CreateCustomerDto } from './dto/create-customer.dto';
@@ -7,6 +7,9 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { BusinessHeaders } from '../common/types';
 
 @ApiTags('Customers')
+@ApiBearerAuth()
+@ApiSecurity('business-id')
+@ApiSecurity('profile-id')
 @Controller('customers')
 export class CustomersController {
   constructor(private readonly customersService: CustomersService) {}
